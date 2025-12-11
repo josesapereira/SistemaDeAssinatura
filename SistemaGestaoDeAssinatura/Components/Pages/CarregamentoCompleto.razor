@@ -1,0 +1,21 @@
+﻿@attribute [Authorize]
+<RadzenStack @bind-Visible=@Value Style="height: 100%; width: 100%; position: absolute; z-index: 99; top: 0; left: 0; background: white;" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+    @if (Maximo > 0)
+    {
+        <RadzenProgressBarCircular class="rounded-circle p-0" Value="@Minimo" Max="@Maximo" Min="0" Mode="ProgressBarMode.Determinate" Style="flex-wrap: nowrap; height: 100px; width: 100px; font-size: 16px; color: black; background: rgba(255, 255, 255, 1)" Unit="@($" / {Maximo}")" />
+    }
+    else
+    {
+        <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="height: 100px" />
+    }
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public bool Value { get; set; }
+    [Parameter]
+    public int Maximo { get; set; } = 0;
+
+    [Parameter]
+    public int Minimo { get; set; } = 0;
+}

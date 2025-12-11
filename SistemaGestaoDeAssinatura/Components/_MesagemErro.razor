@@ -1,0 +1,20 @@
+﻿<RadzenStack Gap="1rem" JustifyContent="JustifyContent.SpaceBetween">
+    <RadzenStack Gap="0.5rem">
+        <RadzenText TextStyle="TextStyle.H3" class="rz-display-flex rz-mt-2 rz-my-0">Alerta de erro!!</RadzenText>
+        @if (Mensagem.InnerException == null)
+        {
+            <RadzenText TextStyle="TextStyle.H6" class="rz-display-flex rz-mt-2 rz-my-0" Text="@("Message: " + Mensagem.Message)"></RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" class="rz-display-flex rz-mt-2 rz-my-0" Text="@("StackTrace: " + Mensagem.StackTrace)"></RadzenText>
+        }
+        else
+        {
+            <RadzenText TextStyle="TextStyle.H6" class="rz-display-flex rz-mt-2 rz-my-0" Text="@("Message: " + Mensagem.InnerException.Message)"></RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" class="rz-display-flex rz-mt-2 rz-my-0" Text="@("StackTrace: " + Mensagem.InnerException.StackTrace)"></RadzenText>
+
+        }
+    </RadzenStack>
+
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Style="width: 100%">
+        <RadzenButton Click="Fechar" Text="Ok" />
+    </RadzenStack>
+</RadzenStack>

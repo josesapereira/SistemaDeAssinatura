@@ -1,0 +1,102 @@
+@page "/alterar-senha"
+@attribute [Authorize]
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Alterar Senha</PageTitle>
+
+<RadzenCard Style="max-width: 500px; margin: 50px auto;">
+    <RadzenStack Gap="1.5rem">
+        <RadzenText TextStyle="TextStyle.H3" Align="TextAlign.Center">Alterar Senha</RadzenText>
+        <RadzenText Align="TextAlign.Center" Style="color: #666;">Primeiro acesso - Por favor, altere sua senha</RadzenText>
+        
+        <EditForm Model="@alterarSenhaDTO" OnValidSubmit="@OnSubmit">
+            <RadzenFieldset Text="Nova Senha">
+                <RadzenStack Gap="1rem">
+                    <RadzenFormField Text="Senha Atual" class="rz-col-12">
+                        <RadzenPassword @bind-Value="@alterarSenhaDTO.SenhaAtual" Placeholder="Digite sua senha atual" style="width: 100%" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Nova Senha" class="rz-col-12">
+                        <RadzenPassword @bind-Value="@alterarSenhaDTO.NovaSenha" Placeholder="Digite a nova senha (mínimo 6 caracteres)" style="width: 100%" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Confirmar Nova Senha" class="rz-col-12">
+                        <RadzenPassword @bind-Value="@alterarSenhaDTO.ConfirmarNovaSenha" Placeholder="Confirme a nova senha" style="width: 100%" />
+                    </RadzenFormField>
+
+                    @if (!string.IsNullOrEmpty(mensagemErro))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" Title="Erro" Text="@mensagemErro" />
+                    }
+
+                    @if (!string.IsNullOrEmpty(mensagemSucesso))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Success" Title="Sucesso" Text="@mensagemSucesso" />
+                    }
+
+                    <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" 
+                                  Text="Salvar" Icon="save" class="rz-col-12" IsBusy="@carregando" />
+                </RadzenStack>
+            </RadzenFieldset>
+        </EditForm>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    private AlterarSenhaDTO alterarSenhaDTO = new();
+    private string mensagemErro = string.Empty;
+    private string mensagemSucesso = string.Empty;
+    private bool carregando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.Identity?.IsAuthenticated ?? true)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        carregando = true;
+        mensagemErro = string.Empty;
+        mensagemSucesso = string.Empty;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/alterar-senha", alterarSenhaDTO);
+            var resultado = await response.Content.ReadFromJsonAsync<RespostaDTO<object>>();
+
+            if (resultado != null && resultado.Sucesso)
+            {
+                mensagemSucesso = resultado.Mensagem;
+                
+                // Aguardar um pouco antes de redirecionar
+                await Task.Delay(1500);
+                
+                // Recarregar a página para aplicar autenticação
+                Navigation.NavigateTo("/ativar-2fa", forceLoad: true);
+            }
+            else
+            {
+                mensagemErro = resultado?.Mensagem ?? "Erro ao alterar senha";
+                if (resultado?.Erros != null && resultado.Erros.Any())
+                {
+                    mensagemErro += ": " + string.Join(", ", resultado.Erros);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+}
+

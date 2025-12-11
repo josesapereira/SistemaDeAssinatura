@@ -1,0 +1,83 @@
+is_global = true
+build_property.TargetFramework = net9.0
+build_property.TargetFramework = net9.0
+build_property.TargetPlatformMinVersion = 
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v9.0
+build_property.RootNamespace = SistemaGestaoDeAssinatura
+build_property.RootNamespace = SistemaGestaoDeAssinatura
+build_property.ProjectDir = C:\projeto\SistemaDeAssinatura\SistemaGestaoDeAssinatura\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\projeto\SistemaDeAssinatura\SistemaGestaoDeAssinatura
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/App.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Component.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xDb21wb25lbnQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Layout/LoginLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTG9naW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Pages/Autencicacao/AlterarSenha.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBdXRlbmNpY2FjYW9cQWx0ZXJhclNlbmhhLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Pages/Autencicacao/Ativacao2FA.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBdXRlbmNpY2FjYW9cQXRpdmFjYW8yRkEucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Pages/Autencicacao/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBdXRlbmNpY2FjYW9cTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Pages/Autencicacao/Validacao2FA.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBdXRlbmNpY2FjYW9cVmFsaWRhY2FvMkZBLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Pages/CarregamentoCompleto.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDYXJyZWdhbWVudG9Db21wbGV0by5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Pages/ModalObservacao.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xNb2RhbE9ic2VydmFjYW8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/projeto/SistemaDeAssinatura/SistemaGestaoDeAssinatura/Components/_MesagemErro.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfTWVzYWdlbUVycm8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 

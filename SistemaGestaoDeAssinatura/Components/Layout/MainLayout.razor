@@ -1,0 +1,92 @@
+﻿@using SistemaGestaoDeAssinatura.Components.Pages
+@using Radzen.Blazor
+@inherits LayoutComponentBase
+@attribute [Authorize] 
+
+<script>
+    window.startLoop = (dotNetHelper) => {
+        intervalId = setInterval(() => {
+            dotNetHelper.invokeMethodAsync("pesquisar");
+        }, 30000);
+    }
+
+    window.download = function (fileName, byteArray) {
+        const blob = new Blob([byteArray]);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    };
+</script>
+
+
+<RadzenComponents @rendermode="InteractiveAuto" />
+<CarregamentoCompleto Value="@carregando" />
+@*
+<CascadingValue Value="this">
+    <AuthorizeView>
+        <RadzenLayout Style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'; position: relative;">
+            <RadzenHeader Style="display: flex;" class="cordegrade">
+                <RadzenSidebarToggle Style="background: var(--rz-primary)" Click="@(async () => SidebarToggleClick(!sidebarExpanded))" />
+
+                <RadzenStack class="w-100" AlignItems="AlignItems.Center" Style="margin-right:20px" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                    <RadzenButton Click="processar" Text="Processar" Icon="refresh" Visible="@(isAdmin)" /> 
+
+                    <RadzenText class="text-light" Text="@($"{re} | {nomeESobrenome}")" />
+                </RadzenStack>
+            </RadzenHeader>
+
+            <RadzenBody>
+                @Body
+            </RadzenBody>
+
+            <RadzenSidebar Style="@backgroudcolor" class="custom-menu h-100">
+                <RadzenStack class="h-100" Gap="0" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack AlignItems="AlignItems.Center" class="rz-py-3 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding); border-bottom: var(--rz-panel-menu-item-border);">
+                        <RadzenImage Path="@("./Icone.png?ts=" + DateTime.Now.Ticks)" style="width: 40px; height: 40px;" AlternateText="Logo"></RadzenImage>
+
+                        <RadzenText Text="@(sidebarExpanded ? "SISTEMA COTA EXTRA DE COMBUSTÍVEL" : "SCE")" TextStyle="TextStyle.Subtitle1" class="rz-mb-0 text-center" style="color: var(--rz-sidebar-color); font-size:14px" />
+                    </RadzenStack>
+
+                    <RadzenPanelMenu DisplayStyle="@DisplayStyle" Style="flex-grow: 1;" class="menu shadow-none">
+                        <RadzenPanelMenuItem Icon="dashboard" Text="Dashboard" Path="dashboard" Visible="@(!isRH)" />
+
+                        <RadzenPanelMenuItem Icon="local_gas_station" Text="Justificativa de combustível" Path="ListaJustificativadeCombustivel" />
+
+                        <RadzenPanelMenuItem Icon="credit_card_gear" Text="Gerenciamento de recarga" Visible="@(isAdmin)" Path="ListaProcessamentoRecarga" />
+
+                        <RadzenPanelMenuItem Icon="request_quote" Text="Lista de descontos" Visible="@(isAdmin || isRH)" Path="ListaDeDesconto" />
+
+                        <RadzenPanelMenuItem Icon="settings" Text="Cadastros" Visible="@(isAdmin || isFrota)">
+                            <RadzenPanelMenuItem Icon="receipt" Text="Lista de centro de custo" Path="ListaCentroDeCusto" />
+
+                            <RadzenPanelMenuItem Icon="fact_check" Text="Fluxo de aprovação" Path="ListaFluxoDeAprovacao" />
+
+                            <RadzenPanelMenuItem Icon="list_alt_add" Text="Cadastro justificativa" Path="ListadeJustificativa" />
+
+                            <RadzenPanelMenuItem Icon="group_add" Text="Usuários" Path="usuarios" />
+                        </RadzenPanelMenuItem>
+
+                        <RadzenPanelMenuItem Visible="@isAdmin" Icon="schedule" Text="Log geral" Path="ListaLogGeral" />
+                    </RadzenPanelMenu>
+
+                    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0" class="p-2">
+                        <RadzenImage Path="./ability.png" Style="@($"width: {(sidebarExpanded ? 100 : 46)}px; object-fit: contain; margin-left: -10px;")" class="mb-1" />
+
+                        @if (sidebarExpanded)
+                        {
+                            <RadzenText Text="@($"{KeyCloak.Versao}")" TextStyle="TextStyle.Caption" TagName="TagName.P" TextAlign="TextAlign.Center" Style="color: var(--rz-sidebar-color); font-size: 8px;" />
+                            <RadzenText Text="ABILITY TECNOLOGIA" TextStyle="TextStyle.Overline" TagName="TagName.P" TextAlign="TextAlign.Center" Style="color: var(--rz-sidebar-color); font-size: 8px;" />
+
+                            <RadzenText Text="COPYRIGHT Ⓒ 2025" TextStyle="TextStyle.Overline" class="rz-mb-0" TagName="TagName.P" TextAlign="TextAlign.Center" Style="color: var(--rz-sidebar-color); font-size: 8px;" />
+                        }
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenSidebar>
+        </RadzenLayout>
+    </AuthorizeView>
+</CascadingValue> *@

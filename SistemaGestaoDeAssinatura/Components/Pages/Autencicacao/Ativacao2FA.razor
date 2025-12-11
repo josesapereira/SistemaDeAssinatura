@@ -1,0 +1,148 @@
+@page "/ativar-2fa"
+@attribute [Authorize]
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Ativar 2FA</PageTitle>
+
+<RadzenCard Style="max-width: 500px; margin: 50px auto;">
+    <RadzenStack Gap="1.5rem">
+        <RadzenText TextStyle="TextStyle.H3" Align="TextAlign.Center">Ativar Autenticação de Dois Fatores</RadzenText>
+        
+        @if (ativacao2FA != null && !string.IsNullOrEmpty(ativacao2FA.QRCodeBase64))
+        {
+            <RadzenStack Gap="1rem">
+                <RadzenText Align="TextAlign.Center">Escaneie o QR Code com seu aplicativo autenticador:</RadzenText>
+                
+                <div style="text-align: center;">
+                    <img src="data:image/png;base64,@ativacao2FA.QRCodeBase64" alt="QR Code 2FA" style="max-width: 300px; border: 1px solid #ddd; padding: 10px;" />
+                </div>
+
+                <RadzenText Align="TextAlign.Center" Style="font-weight: bold;">Código Manual:</RadzenText>
+                <RadzenText Align="TextAlign.Center" Style="font-size: 1.2em; letter-spacing: 2px;">@ativacao2FA.CodigoManual</RadzenText>
+                
+                <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Copiar Código" 
+                              Icon="content_copy" Click="@CopiarCodigo" class="rz-col-12" />
+
+                <EditForm Model="@ativacao2FA" OnValidSubmit="@OnSubmit">
+                    <RadzenFieldset Text="Validar Código">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Código de Validação" class="rz-col-12">
+                                <RadzenTextBox @bind-Value="@ativacao2FA.CodigoValidacao" 
+                                               Placeholder="Digite o código do aplicativo" 
+                                               MaxLength="6" style="width: 100%" />
+                            </RadzenFormField>
+
+                            @if (!string.IsNullOrEmpty(mensagemErro))
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Danger" Title="Erro" Text="@mensagemErro" />
+                            }
+
+                            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" 
+                                          Text="Ativar 2FA" Icon="verified" class="rz-col-12" IsBusy="@carregando" />
+                        </RadzenStack>
+                    </RadzenFieldset>
+                </EditForm>
+            </RadzenStack>
+        }
+        else if (carregandoQRCode)
+        {
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText Align="TextAlign.Center">Gerando QR Code...</RadzenText>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    private Ativacao2FADTO? ativacao2FA;
+    private string mensagemErro = string.Empty;
+    private bool carregando = false;
+    private bool carregandoQRCode = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.Identity?.IsAuthenticated ?? true)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+            return;
+        }
+
+        await CarregarQRCode();
+    }
+
+    private async Task CarregarQRCode()
+    {
+        carregandoQRCode = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/ativar-2fa", new Ativacao2FADTO());
+            var resultado = await response.Content.ReadFromJsonAsync<RespostaDTO<Ativacao2FADTO>>();
+
+            if (resultado != null && resultado.Sucesso && resultado.Dados != null)
+            {
+                ativacao2FA = resultado.Dados;
+            }
+            else
+            {
+                mensagemErro = resultado?.Mensagem ?? "Erro ao gerar QR Code";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            carregandoQRCode = false;
+        }
+    }
+
+    private async Task CopiarCodigo()
+    {
+        if (ativacao2FA != null && !string.IsNullOrEmpty(ativacao2FA.CodigoManual))
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", ativacao2FA.CodigoManual);
+            // Mostrar notificação de sucesso (pode usar RadzenNotification se disponível)
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        if (ativacao2FA == null || string.IsNullOrEmpty(ativacao2FA.CodigoValidacao))
+        {
+            mensagemErro = "Por favor, digite o código de validação";
+            return;
+        }
+
+        carregando = true;
+        mensagemErro = string.Empty;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/ativar-2fa", ativacao2FA);
+            var resultado = await response.Content.ReadFromJsonAsync<RespostaDTO<object>>();
+
+            if (resultado != null && resultado.Sucesso)
+            {
+                // Recarregar a página para aplicar autenticação completa
+                Navigation.NavigateTo("/home", forceLoad: true);
+            }
+            else
+            {
+                mensagemErro = resultado?.Mensagem ?? "Erro ao ativar 2FA";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+}
+

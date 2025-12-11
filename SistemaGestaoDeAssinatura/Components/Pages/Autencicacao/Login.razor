@@ -1,0 +1,31 @@
+@layout LoginLayout
+@page "/"
+
+<RadzenStack AlignItems="AlignItems.Center" style="position: absolute; top: 0; width: 100%;">
+    <RadzenAlert Visible="@(!string.IsNullOrEmpty(error))" Size="AlertSize.Small" Shade="Shade.Light" AlertStyle="AlertStyle.Danger" Style="width: auto;" Text="@error" />
+</RadzenStack>
+
+<RadzenStack Style="width:100%;height:96vh">
+    <RadzenStack Gap="5" Class="rz-my-12 rz-mx-auto rz-border-radius-6 rz-shadow-10" Style="width: 100%; max-width: 400px; overflow: hidden;">
+        <RadzenCard Class="rz-shadow-0 rz-border-radius-0 cordegrade rz-p-12" style="text-align: center;">
+            <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" Class="rz-color-white rz-mb-0">Sistema Gestão de assinatura </RadzenText>
+
+
+        </RadzenCard>
+        <RadzenCard Class="rz-shadow-0 rz-p-12">
+            <RadzenTemplateForm Action="@($"api/account/login?redirectUrl={redirectUrl}")" Data="@("login")" Method="post">
+                <RadzenLogin AllowRegister="false" LoginText="Entrar" UserText="Usuário" PasswordText="Senha" AllowResetPassword="false" FormFieldVariant="Variant.Outlined" />
+
+            </RadzenTemplateForm>
+
+        </RadzenCard>
+    </RadzenStack>
+</RadzenStack>
+
+<div style="position: absolute; bottom: 10px; right: 20px;">
+    <RadzenText Text="@($"1.0.0.0")"
+                TextStyle="Radzen.Blazor.TextStyle.Caption"
+                TagName="Radzen.Blazor.TagName.P"
+                TextAlign="Radzen.TextAlign.Right"
+                style="" />
+</div>

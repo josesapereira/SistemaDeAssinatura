@@ -1,0 +1,159 @@
+﻿:root {
+    --rz-border-radius: 6px !important;
+    --rz-panel-menu-item-active-background-color: var(--rz-primary-lighter);
+    /* ESQUEMA DE CORES DOS CARDS (verde-azulado original) */
+    --card-bg-1: #E0F7F8; /* muito claro */
+    --card-bg-2: #B3E2E5; /* claro */
+    --card-bg-3: #80CDD0; /* médio claro */
+    --card-bg-4: #4DA8BA; /* intermediário */
+    --card-bg-5: #13909B; /* base original */
+    --card-bg-6: #0E6E77; /* escuro */
+    --card-bg-7: #0A4A53; /* muito escuro */
+    /* Verde-azulado - Primária */
+    --rz-primary: #13909B;
+    --rz-primary-lighter: #4DA8BA30;
+    --rz-primary-light: #4DA8BA;
+    --rz-primary-dark: #0E6E77;
+    --rz-primary-darker: #0A4A53;
+    /* Laranja - Secundária */
+    --rz-secondary: #EB6726;
+    --rz-secondary-lighter: #f4986630;
+    --rz-secondary-light: #f07e46;
+    --rz-secondary-dark: #c6541e;
+    --rz-secondary-darker: #9e4317;
+    /* Info */
+    --rz-info: #b817aa;
+    --rz-info-lighter: #63c2d130;
+    --rz-scrollbar-color: var(--rz-secondary);
+    --rz-info-light: #d21ac2;
+    --rz-info-dark: #128093;
+    --rz-info-darker: #0e6675;
+    --rz-success: #28a745;
+    --rz-success-lighter: #6fcf9730;
+    --rz-success-light: #53c17d;
+    --rz-success-dark: #218838;
+    --rz-success-darker: #1a6e2d;
+    --rz-success-hover: #218838;
+    --rz-warning: #ffc107;
+    --rz-warning-lighter: #ffdb6e30;
+    --rz-warning-light: #ffcf3f;
+    --rz-warning-dark: #e0a800;
+    --rz-warning-darker: #b68900;
+    --rz-warning-hover: #e6ac00;
+    --rz-danger: #dc3545;
+    --rz-danger-lighter: #e5737c30;
+    --rz-danger-light: #e04c57;
+    --rz-danger-dark: #c82333;
+    --rz-danger-darker: #a71d2a;
+    --rz-danger-hover: #bd2130;
+    --rz-grid-border-radius: var(--rz-border-radius);
+    --rz-checkbox-border-radius: var(--rz-border-radius);
+    --rz-grid-hover-color: var(--rz-primary-dark);
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+    padding: 0;
+}
+
+.rz-data-grid-data::-webkit-scrollbar-track {
+    border-radius: 0;
+}
+
+.rz-sidebar::-webkit-scrollbar-track {
+    border-radius: 0;
+    background: var(--rz-secondary-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--rz-secondary);
+    border-radius: 6px;
+}
+
+.custom-menu {
+    background: linear-gradient(90deg, var(--rz-primary-darker), var(--rz-primary));
+    
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+    .custom-menu .rz-navigation-item {
+        color: white !important;
+        font-weight: bold;
+        /*border-radius: 5px;*/
+        transition: background 0.3s;
+    }
+
+        .custom-menu .rz-navigation-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+.menu {
+    background: linear-gradient(90deg, var(--rz-primary-darker), var(--rz-primary));
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.rz-sidebar-toggle {
+    background: var(--rz-primary-darker) !important;
+    color: white;
+}
+
+.cordegrade {
+    background: linear-gradient(90deg, var(--rz-primary-darker), var(--rz-primary));
+}
+.upload-class > div {
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important
+}
+
+    .upload-class > div > span {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 36px !important;
+        width: 36px !important;
+        border-radius: 50%;
+        background: transparent !important;
+    }
+
+        .upload-class > div > span > i {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 36px !important;
+            width: 36px !important;
+            color: var(--rz-info)
+        }
+
+.rz-fileupload-content {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    cursor: pointer;
+}
+
+.rz-fileupload-buttonbar > span {
+    width: 100%;
+    padding: 8px !important;
+    text-align: center;
+    cursor: pointer;
+}
+
+    .rz-fileupload-buttonbar > span > input {
+        width: 1000%;
+        height: 100%;
+        cursor: pointer;
+        position: absolute
+    }
+
+.rz-fileupload-buttonbar {
+    background-color: transparent;
+    padding: 0;
+    cursor: pointer;
+}
