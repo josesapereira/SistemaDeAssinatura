@@ -5,6 +5,7 @@ using Domain.Models;
 using Infraestrutura;
 using Infraestrutura.Contexto;
 using Infraestrutura.Repository;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +20,7 @@ using System.Data;
 using System.Globalization;
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents().AddHubOptions(options => options.MaximumReceiveMessageSize = 10 * 1024 * 1024);
 builder.Services.AddServerSideBlazor()
         .AddCircuitOptions(options =>
@@ -26,9 +28,36 @@ builder.Services.AddServerSideBlazor()
             options.DetailedErrors = true;
             options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(0);
         });
-builder.Services.AddScoped<HttpClient>();
+builder.Services.AddScoped<HttpClient>(sp =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+    
+    var handler = new HttpClientHandler();
+    var httpClient = new HttpClient(handler)
+    {
+        BaseAddress = new Uri(navigationManager.BaseUri)
+    };
+    
+    // Adicionar cookies de autenticaÃ§Ã£o se disponÃ­veis
+    if (httpContextAccessor.HttpContext != null && httpContextAccessor.HttpContext.Request.Headers.ContainsKey("Cookie"))
+    {
+        var cookieHeader = httpContextAccessor.HttpContext.Request.Headers["Cookie"].ToString();
+        if (!string.IsNullOrEmpty(cookieHeader))
+        {
+            httpClient.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+        }
+    }
+    
+    return httpClient;
+});
 builder.Services.AddRadzenComponents();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
@@ -86,13 +115,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddAuthorization(options =>
 {
-    // Policy para autenticação temporária (primeiro acesso)
+    // Policy para autenticaï¿½ï¿½o temporï¿½ria (primeiro acesso)
     options.AddPolicy("TemporaryAuth", policy =>
     {
         policy.RequireClaim("TemporaryAuth", "true");
     });
 
-    // Policy para autenticação completa
+    // Policy para autenticaï¿½ï¿½o completa
     options.AddPolicy("FullAuth", policy =>
     {
         policy.RequireAuthenticatedUser();
@@ -132,10 +161,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 app.UseDeveloperExceptionPage();
-app.MapControllers();
 app.UseStaticFiles();
 app.UseAntiforgery();
 app.MapStaticAssets();
+app.MapControllers();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.Run();

@@ -1,5 +1,6 @@
 @page "/alterar-senha"
-@attribute [Authorize]
+@layout LoginLayout
+@attribute [Authorize(Policy = "TemporaryAuth")]
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -45,6 +46,13 @@
 </RadzenCard>
 
 @code {
+
+
+
+
+
+
+
     private AlterarSenhaDTO alterarSenhaDTO = new();
     private string mensagemErro = string.Empty;
     private string mensagemSucesso = string.Empty;
@@ -67,25 +75,89 @@
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/auth/alterar-senha", alterarSenhaDTO);
-            var resultado = await response.Content.ReadFromJsonAsync<RespostaDTO<object>>();
+            var response = await Http.PostAsJsonAsync("api/Account/AlterarSenha", alterarSenhaDTO);
 
-            if (resultado != null && resultado.Sucesso)
+            // Verificar se a resposta foi bem-sucedida
+            if (response.IsSuccessStatusCode)
             {
-                mensagemSucesso = resultado.Mensagem;
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                };
                 
-                // Aguardar um pouco antes de redirecionar
-                await Task.Delay(1500);
-                
-                // Recarregar a página para aplicar autenticação
-                Navigation.NavigateTo("/ativar-2fa", forceLoad: true);
+                var resultado = await response.Content.ReadFromJsonAsync<RespostaDTO<object>>(options);
+
+                if (resultado != null && resultado.Sucesso)
+                {
+                    mensagemSucesso = resultado.Mensagem;
+
+                    // Aguardar um pouco antes de redirecionar
+                    await Task.Delay(1500);
+
+                    // Recarregar a página para aplicar autenticação
+                    Navigation.NavigateTo("/ativar-2fa", forceLoad: true);
+                }
+                else
+                {
+                    mensagemErro = resultado?.Mensagem ?? "Erro ao alterar senha";
+                    if (resultado?.Erros != null && resultado.Erros.Any())
+                    {
+                        mensagemErro += ": " + string.Join(", ", resultado.Erros);
+                    }
+                }
             }
             else
             {
-                mensagemErro = resultado?.Mensagem ?? "Erro ao alterar senha";
-                if (resultado?.Erros != null && resultado.Erros.Any())
+                // Tentar ler a resposta como JSON primeiro
+                var contentString = await response.Content.ReadAsStringAsync();
+
+                // Verificar se o conteúdo é JSON válido (começa com { ou [)
+                if (!string.IsNullOrWhiteSpace(contentString) && 
+                    (contentString.TrimStart().StartsWith("{") || contentString.TrimStart().StartsWith("[")))
                 {
-                    mensagemErro += ": " + string.Join(", ", resultado.Erros);
+                    try
+                    {
+                        var options = new System.Text.Json.JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true,
+                            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                        };
+                        
+                        var resultado = System.Text.Json.JsonSerializer.Deserialize<RespostaDTO<object>>(contentString, options);
+                        mensagemErro = resultado?.Mensagem ?? $"Erro: {response.StatusCode}";
+                        if (resultado?.Erros != null && resultado.Erros.Any())
+                        {
+                            mensagemErro += ": " + string.Join(", ", resultado.Erros);
+                        }
+                    }
+                    catch (System.Text.Json.JsonException jsonEx)
+                    {
+                        // Se falhar na deserialização, mostrar o conteúdo e o erro
+                        mensagemErro = $"Erro ao processar resposta do servidor. Status: {response.StatusCode}";
+                        if (contentString.Length > 200)
+                        {
+                            mensagemErro += $"\nResposta: {contentString.Substring(0, 200)}...";
+                        }
+                        else
+                        {
+                            mensagemErro += $"\nResposta: {contentString}";
+                        }
+                    }
+                }
+                else
+                {
+                    // Se não for JSON, mostrar mensagem genérica
+                    mensagemErro = $"Erro ao alterar senha. Status: {response.StatusCode}";
+                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        mensagemErro = "Sessão expirada. Por favor, faça login novamente.";
+                        Navigation.NavigateTo("/", forceLoad: true);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(contentString) && contentString.Length < 500)
+                    {
+                        mensagemErro += $"\n{contentString}";
+                    }
                 }
             }
         }
@@ -97,6 +169,8 @@
         {
             carregando = false;
         }
+
+        StateHasChanged();
     }
 }
 

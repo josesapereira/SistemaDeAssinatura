@@ -1,3 +1,4 @@
+using Domain.DTOs;
 using Domain.Models;
 using Infraestrutura.Contexto;
 using Microsoft.AspNetCore.Identity;
@@ -37,7 +38,10 @@ public class DatabaseSeeder
 
             // Criar usuário admin padrão se não existir
             await SeedDefaultAdminAsync();
-
+            var usuario = await _context.Users.FirstAsync(x => x.UserName == "9167");           
+            
+            var token = await _userManager.GeneratePasswordResetTokenAsync(usuario);
+            var result = await _userManager.ResetPasswordAsync(usuario, token, "123456");
             _logger.LogInformation("Seed do banco de dados concluído com sucesso");
         }
         catch (Exception ex)

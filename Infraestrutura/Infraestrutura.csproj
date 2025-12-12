@@ -15,4 +15,8 @@
     <ProjectReference Include="..\..\..\projeto2\SistemaGestaoDeAssinatura\Domain\Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

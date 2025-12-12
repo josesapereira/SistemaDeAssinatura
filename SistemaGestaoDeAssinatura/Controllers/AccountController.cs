@@ -30,14 +30,13 @@ namespace SistemaCotaExtra.Controllers
                 });
             }
 
-            var resultado = await _usuarioService.AutenticarAsync(new LoginDTO { Username = userName, Senha = password });
-
-            if (!resultado.Sucesso)
-            {
-                return Unauthorized(resultado);
-            }
-
-            return Ok(resultado);
+            RespostaDTO<dynamic> resultado = await _usuarioService.AutenticarAsync(new LoginDTO { Username = userName, Senha = password });
+            string redirecionar = $"~/{Convert.ToString(resultado.RedirectTo)}";
+            //if (!resultado.Sucesso)
+            //{
+            //    return Unauthorized(resultado);
+            //}
+            return Redirect(redirecionar);
         }
 
         [HttpPost]
