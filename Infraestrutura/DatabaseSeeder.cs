@@ -42,6 +42,11 @@ public class DatabaseSeeder
             
             var token = await _userManager.GeneratePasswordResetTokenAsync(usuario);
             var result = await _userManager.ResetPasswordAsync(usuario, token, "123456");
+            usuario.DoisFatoresAtivo = false;
+            usuario.PrimeiroAcesso = true;
+            usuario.TwoFactorEnabled = false;
+            await _userManager.ResetAuthenticatorKeyAsync(usuario);
+            //await _usuarioRepository.AdicionarAsync(usuario);
             _logger.LogInformation("Seed do banco de dados concluído com sucesso");
         }
         catch (Exception ex)
@@ -86,8 +91,8 @@ public class DatabaseSeeder
         {
             UserName = defaultAdminEmail,
             Email = defaultAdminEmail,
-            Nome = defaultAdminName,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            Ativo = true
         };
 
         var result = await _userManager.CreateAsync(adminUser, defaultAdminPassword);

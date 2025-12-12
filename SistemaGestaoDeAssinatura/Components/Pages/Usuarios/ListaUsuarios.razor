@@ -1,0 +1,175 @@
+@page "/usuarios"
+@using Domain.DTOs
+@using Domain.Interfaces.Service
+@using Radzen
+@using Radzen.Blazor
+@attribute [Authorize]
+@inject IUsuarioService UsuarioService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<PageTitle>Usuários</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenText TextStyle="TextStyle.H3" Text="Gerenciamento de Usuários" />
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Criar Novo" Icon="add" Click="@AbrirDialogCriar" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenDataGrid @ref="grid" Data="@usuarios" TItem="UsuarioListagemDTO" AllowPaging="true" PageSize="10" 
+                           AllowSorting="true" FilterMode="FilterMode.Advanced" class="w-100">
+                <Columns>
+                    <RadzenDataGridColumn TItem="UsuarioListagemDTO" Property="RE" Title="RE" Width="120px" />
+                    <RadzenDataGridColumn TItem="UsuarioListagemDTO" Property="Nome" Title="Nome" Width="250px" />
+                    <RadzenDataGridColumn TItem="UsuarioListagemDTO" Property="Email" Title="Email" Width="250px" />
+                    <RadzenDataGridColumn TItem="UsuarioListagemDTO" Property="Ativo" Title="Ativo" Width="100px">
+                        <Template>
+                            <RadzenBadge BadgeStyle="@(context.Ativo ? BadgeStyle.Success : BadgeStyle.Danger)" 
+                                        Text="@(context.Ativo ? "Ativo" : "Inativo")" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="UsuarioListagemDTO" Title="Ações" Width="150px" Sortable="false" Filterable="false">
+                        <Template>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Icon="edit" Size="ButtonSize.Small" 
+                                            Click="@(() => AbrirDialogEditar(context))" 
+                                            ButtonStyle="ButtonStyle.Info" />
+                                <RadzenButton Icon="lock_reset" Size="ButtonSize.Small" 
+                                            Click="@(() => ResetarSenha(context.RE))" 
+                                            ButtonStyle="ButtonStyle.Warning" 
+                                            Title="Resetar Senha" />
+                                <RadzenButton Icon="security" Size="ButtonSize.Small" 
+                                            Click="@(() => Resetar2FA(context.RE))" 
+                                            ButtonStyle="ButtonStyle.Secondary" 
+                                            Title="Resetar 2FA" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    private RadzenDataGrid<UsuarioListagemDTO>? grid;
+    private List<UsuarioListagemDTO> usuarios = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarUsuarios();
+    }
+
+    private async Task CarregarUsuarios()
+    {
+        var resultado = await UsuarioService.ListarUsuariosAsync();
+        if (resultado.Sucesso && resultado.Dados != null)
+        {
+            usuarios = resultado.Dados;
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage 
+            { 
+                Severity = NotificationSeverity.Error, 
+                Summary = "Erro", 
+                Detail = resultado.Mensagem 
+            });
+        }
+    }
+
+    private async Task AbrirDialogCriar()
+    {
+        var resultado = await DialogService.OpenAsync<CriarUsuarioDialog>("Criar Usuário", 
+            new Dictionary<string, object>(), 
+            new DialogOptions { Width = "700px", Height = "auto" });
+
+        if (resultado != null && resultado is bool && (bool)resultado)
+        {
+            await CarregarUsuarios();
+        }
+    }
+
+    private async Task AbrirDialogEditar(UsuarioListagemDTO usuario)
+    {
+        var resultado = await DialogService.OpenAsync<CriarUsuarioDialog>("Editar Usuário", 
+            new Dictionary<string, object> { { "UsuarioId", usuario.Id } }, 
+            new DialogOptions { Width = "700px", Height = "auto" });
+
+        if (resultado != null && resultado is bool && (bool)resultado)
+        {
+            await CarregarUsuarios();
+        }
+    }
+
+    private async Task ResetarSenha(string re)
+    {
+        var confirmar = await DialogService.Confirm("Deseja realmente resetar a senha deste usuário para '123456'?", 
+            "Resetar Senha", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+
+        if (confirmar == true)
+        {
+            var resultado = await UsuarioService.ResetarSenhaAsync(re);
+            if (resultado.Sucesso)
+            {
+                NotificationService.Notify(new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Success, 
+                    Summary = "Sucesso", 
+                    Detail = resultado.Mensagem 
+                });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Error, 
+                    Summary = "Erro", 
+                    Detail = resultado.Mensagem 
+                });
+            }
+        }
+    }
+
+    private async Task Resetar2FA(string re)
+    {
+        var confirmar = await DialogService.Confirm("Deseja realmente resetar o 2FA deste usuário?", 
+            "Resetar 2FA", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+
+        if (confirmar == true)
+        {
+            var resultado = await UsuarioService.Resetar2FAAsync(re);
+            if (resultado.Sucesso)
+            {
+                NotificationService.Notify(new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Success, 
+                    Summary = "Sucesso", 
+                    Detail = resultado.Mensagem 
+                });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Error, 
+                    Summary = "Erro", 
+                    Detail = resultado.Mensagem 
+                });
+            }
+        }
+    }
+}
+
+

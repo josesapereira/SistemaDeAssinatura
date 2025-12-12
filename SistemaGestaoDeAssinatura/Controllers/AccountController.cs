@@ -30,12 +30,26 @@ namespace SistemaCotaExtra.Controllers
                 });
             }
 
-            RespostaDTO<dynamic> resultado = await _usuarioService.AutenticarAsync(new LoginDTO { Username = userName, Senha = password });
-            string redirecionar = $"~/{Convert.ToString(resultado.RedirectTo)}";
-            //if (!resultado.Sucesso)
-            //{
-            //    return Unauthorized(resultado);
-            //}
+            var resultado = await _usuarioService.AutenticarAsync(new LoginDTO { Username = userName, Senha = password });
+            
+            if (!resultado.Sucesso)
+            {
+                // Retornar erro na query string para a tela de login capturar
+                // Não preservar redirectUrl quando há erro
+                var errorMessage = Uri.EscapeDataString(resultado.Mensagem ?? "Erro ao fazer login");
+                return Redirect($"~/?error={errorMessage}");
+            }
+            
+            string redirecionar = "~/";
+            if (resultado.Dados != null)
+            {
+                var dados = resultado.Dados as DadosLogin;
+                if (dados != null && dados.RedirectTo != null)
+                {
+                    redirecionar = $"~/{dados.RedirectTo}";
+                }
+            }
+            
             return Redirect(redirecionar);
         }
 
@@ -104,11 +118,14 @@ namespace SistemaCotaExtra.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Validar2FA([FromBody] Validacao2FADTO validacao2FADTO)
         {
+            var username = User.Identity?.Name;
+            validacao2FADTO.Username = username;
             if (!ModelState.IsValid)
             {
-                return BadRequest(new RespostaDTO<object>
+                return BadRequest(new RespostaDTO<DadosLogin>
                 {
                     Sucesso = false,
                     Mensagem = "Dados inválidos",

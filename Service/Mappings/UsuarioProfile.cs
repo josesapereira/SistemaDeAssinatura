@@ -10,6 +10,14 @@ public class UsuarioProfile : Profile
     {
         CreateMap<Usuario, UsuarioDto>()
             .ReverseMap();
+        
+        CreateMap<Usuario, UsuarioListagemDTO>()
+            .ForMember(dest => dest.RE, opt => opt.MapFrom(src => src.UserName))
+            .ForMember(dest => dest.Nome, opt => opt.Ignore());
+        
+        CreateMap<Usuario, UsuarioDetalhesDTO>()
+            .ForMember(dest => dest.RE, opt => opt.MapFrom(src => src.UserName))
+            .ForMember(dest => dest.Nome, opt => opt.Ignore());
     }
 }
 

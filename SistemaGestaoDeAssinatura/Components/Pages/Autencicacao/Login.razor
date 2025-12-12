@@ -1,8 +1,14 @@
 @layout LoginLayout
 @page "/"
 
-<RadzenStack AlignItems="AlignItems.Center" style="position: absolute; top: 0; width: 100%;">
-    <RadzenAlert Visible="@(!string.IsNullOrEmpty(error))" Size="AlertSize.Small" Shade="Shade.Light" AlertStyle="AlertStyle.Danger" Style="width: auto;" Text="@error" />
+<RadzenStack AlignItems="AlignItems.Center" style="position: absolute; top: 20px; width: 100%; z-index: 1000;">
+    <RadzenAlert Visible="@(!string.IsNullOrEmpty(error))" 
+                 Size="AlertSize.Medium" 
+                 Shade="Shade.Dark" 
+                 AlertStyle="AlertStyle.Danger" 
+                 Style="max-width: 500px; margin: 0 auto;" 
+                 Title="Erro ao fazer login"
+                 Text="@error" />
 </RadzenStack>
 
 <RadzenStack Style="width:100%;height:96vh">

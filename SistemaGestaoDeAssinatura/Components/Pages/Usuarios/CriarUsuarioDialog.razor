@@ -1,0 +1,47 @@
+@using Domain.DTOs
+@using Radzen.Blazor
+
+<RadzenDialog>
+    <EditForm Model="@model" OnValidSubmit="@OnSubmit">
+        <RadzenStack Gap="1rem">
+            <RadzenFormField Text="RE" class="w-100">
+                <RadzenDropDown @bind-Value="@model.RE" Data="@registroAbilities" 
+                               TextProperty="RE" ValueProperty="RE" 
+                               Placeholder="Selecione o RE" 
+                               AllowClear="false"
+                               Disabled="@(modoEdicao)"
+                               Change="@OnREChanged" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Nome" class="w-100">
+                <RadzenTextBox @bind-Value="@nomeSelecionado" ReadOnly="true" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Email" class="w-100">
+                <RadzenTextBox @bind-Value="@model.Email" Placeholder="email@exemplo.com" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Ativo" class="w-100">
+                <RadzenSwitch @bind-Value="@model.Ativo" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Arquivo" class="w-100">
+                <RadzenFileInput @bind-Value="@arquivoSelecionado" 
+                                Accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                Multiple="false" />
+                @if (!string.IsNullOrEmpty(arquivoAtual))
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" class="mt-1">
+                        Arquivo atual: @arquivoAtual
+                    </RadzenText>
+                }
+            </RadzenFormField>
+
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="mt-3">
+                <RadzenButton Text="Salvar" ButtonType="ButtonType.Submit" Icon="save" />
+                <RadzenButton Text="Cancelar" ButtonStyle="ButtonStyle.Light" Click="@Cancelar" />
+            </RadzenStack>
+        </RadzenStack>
+    </EditForm>
+</RadzenDialog>
+

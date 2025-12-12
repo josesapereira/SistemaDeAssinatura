@@ -21,11 +21,11 @@
                                        MaxLength="6" style="width: 100%" />
                     </RadzenFormField>
 
-                    <RadzenFormField Text="Usuário" class="rz-col-12">
+@*                     <RadzenFormField Text="Usuário" class="rz-col-12">
                         <RadzenTextBox @bind-Value="@validacao2FA.Username" 
                                        Placeholder="Digite seu usuário" 
                                        style="width: 100%" />
-                    </RadzenFormField>
+                    </RadzenFormField> *@
 
                     @if (!string.IsNullOrEmpty(mensagemErro))
                     {
@@ -47,7 +47,7 @@
 
     private async Task OnSubmit()
     {
-        if (string.IsNullOrEmpty(validacao2FA.Codigo) || string.IsNullOrEmpty(validacao2FA.Username))
+        if (string.IsNullOrEmpty(validacao2FA.Codigo))
         {
             mensagemErro = "Por favor, preencha todos os campos";
             return;
@@ -58,18 +58,25 @@
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/auth/validar-2fa", validacao2FA);
-            var resultado = await response.Content.ReadFromJsonAsync<RespostaDTO<object>>();
-
-            if (resultado != null && resultado.Sucesso)
+            var response = await Http.PostAsJsonAsync("api/Account/Validar2FA", validacao2FA);
+            if (response.IsSuccessStatusCode)
             {
-                // Recarregar a página para aplicar autenticação completa
-                Navigation.NavigateTo("/home", forceLoad: true);
+                var resultado = await response.Content.ReadFromJsonAsync<RespostaDTO<DadosLogin>>();
+                if (resultado != null && resultado.Sucesso)
+                {
+                    // Recarregar a página para aplicar autenticação completa
+                    Navigation.NavigateTo("/usuarios", forceLoad: true);
+                }
+                else
+                {
+                    mensagemErro = resultado?.Mensagem ?? "Código inválido";
+                }
             }
             else
             {
-                mensagemErro = resultado?.Mensagem ?? "Código inválido";
+                mensagemErro = $"Erro: {response.RequestMessage}";
             }
+
         }
         catch (Exception ex)
         {

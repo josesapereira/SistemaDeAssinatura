@@ -22,3 +22,16 @@ C:\projeto2\SistemaGestaoDeAssinatura_api\Domain\obj\Debug\net9.0\Domain.dll
 C:\projeto2\SistemaGestaoDeAssinatura_api\Domain\obj\Debug\net9.0\refint\Domain.dll
 C:\projeto2\SistemaGestaoDeAssinatura_api\Domain\obj\Debug\net9.0\Domain.pdb
 C:\projeto2\SistemaGestaoDeAssinatura_api\Domain\obj\Debug\net9.0\ref\Domain.dll
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.csproj.AssemblyReference.cache
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.AssemblyInfoInputs.cache
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.AssemblyInfo.cs
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.csproj.CoreCompileInputs.cache
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.sourcelink.json
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.dll
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\refint\Domain.dll
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\Domain.pdb
+C:\projeto\SistemaDeAssinatura\Domain\bin\Debug\net9.0\Domain.deps.json
+C:\projeto\SistemaDeAssinatura\Domain\bin\Debug\net9.0\Domain.dll
+C:\projeto\SistemaDeAssinatura\Domain\bin\Debug\net9.0\Domain.pdb
+C:\projeto\SistemaDeAssinatura\Domain\obj\Debug\net9.0\ref\Domain.dll

@@ -97,7 +97,16 @@ namespace SistemaGestaoDeAssinatura.Components.Pages.Autencicacao
                 //    var response = await HttpClient.GetAsync(NavigationManager.BaseUri + "Account/Logout");
                 //}
 
-                error = (query.Get("error") ?? "").Replace("invalido", "inválido").Replace("Usuario", "Usuário") ?? "";
+                var errorParam = query.Get("error");
+                if (!string.IsNullOrEmpty(errorParam))
+                {
+                    // Decodificar a mensagem de erro que vem da API
+                    error = Uri.UnescapeDataString(errorParam);
+                }
+                else
+                {
+                    error = "";
+                }
                 redirectUrl = query.Get("redirectUrl") ?? "";
             }
             catch (Exception)

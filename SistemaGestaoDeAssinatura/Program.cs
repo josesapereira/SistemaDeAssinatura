@@ -5,6 +5,7 @@ using Domain.Models;
 using Infraestrutura;
 using Infraestrutura.Contexto;
 using Infraestrutura.Repository;
+using Infraestrutura.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
@@ -20,7 +21,6 @@ using System.Data;
 using System.Globalization;
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents().AddHubOptions(options => options.MaximumReceiveMessageSize = 10 * 1024 * 1024);
 builder.Services.AddServerSideBlazor()
         .AddCircuitOptions(options =>
@@ -32,13 +32,13 @@ builder.Services.AddScoped<HttpClient>(sp =>
 {
     var navigationManager = sp.GetRequiredService<NavigationManager>();
     var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-    
+
     var handler = new HttpClientHandler();
     var httpClient = new HttpClient(handler)
     {
         BaseAddress = new Uri(navigationManager.BaseUri)
     };
-    
+
     // Adicionar cookies de autenticação se disponíveis
     if (httpContextAccessor.HttpContext != null && httpContextAccessor.HttpContext.Request.Headers.ContainsKey("Cookie"))
     {
@@ -48,23 +48,20 @@ builder.Services.AddScoped<HttpClient>(sp =>
             httpClient.DefaultRequestHeaders.Add("Cookie", cookieHeader);
         }
     }
-    
+
     return httpClient;
 });
 builder.Services.AddRadzenComponents();
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-    });
+builder.Services.AddControllers();
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IRegistroAbilityRepository, RegistroAbilityRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
@@ -72,7 +69,7 @@ ILoggerFactory logger = LoggerFactory.Create(builder => builder.AddConsole());
 var config = new MapperConfiguration(cfg =>
 {
     cfg.AddProfile(new UsuarioProfile());
-});
+},logger);
 IMapper mapper = config.CreateMapper();
 
 builder.Services.AddSingleton(mapper);
@@ -152,7 +149,7 @@ using (var scope = app.Services.CreateScope())
             services.GetRequiredService<RoleManager<Role>>(),
             services.GetRequiredService<ILogger<DatabaseSeeder>>());
 
-        await seeder.SeedAsync();
+        //await seeder.SeedAsync();
     }
     catch (Exception ex)
     {
@@ -161,10 +158,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 app.UseDeveloperExceptionPage();
+app.MapControllers();
 app.UseStaticFiles();
 app.UseAntiforgery();
 app.MapStaticAssets();
-app.MapControllers();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.Run();

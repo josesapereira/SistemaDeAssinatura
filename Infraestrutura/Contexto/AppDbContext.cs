@@ -10,25 +10,11 @@ public class AppDbContext : IdentityDbContext<Usuario, Role, Guid>
     {
     }
 
+    public DbSet<RegistroAbility> RegistroAbilities { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-
-        // Configurar ID do Usuario para gerar GUID automaticamente no banco de dados
-        builder.Entity<Usuario>(entity =>
-        {
-            entity.Property(u => u.Id)
-                .ValueGeneratedOnAdd()
-                .HasDefaultValueSql("NEWSEQUENTIALID()");
-        });
-
-        // Configurar ID da Role para gerar GUID automaticamente no banco de dados
-        builder.Entity<Role>(entity =>
-        {
-            entity.Property(r => r.Id)
-                .ValueGeneratedOnAdd()
-                .HasDefaultValueSql("NEWSEQUENTIALID()");
-        });
 
         // Configurar relacionamento Usuario ↔ UsuarioRole ↔ Role
         builder.Entity<UsuarioRole>(entity =>
@@ -42,6 +28,13 @@ public class AppDbContext : IdentityDbContext<Usuario, Role, Guid>
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configurar RegistroAbility
+        builder.Entity<RegistroAbility>(entity =>
+        {
+            entity.HasIndex(r => r.RE)
+                .IsUnique();
         });
     }
 }

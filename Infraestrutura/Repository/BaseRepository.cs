@@ -28,7 +28,7 @@ public abstract class BaseRepository<T> where T : class
         return await _dbSet.Where(filtro).ToListAsync();
     }
 
-    public virtual async Task<T> SalvarAsync(T entity)
+    public virtual async Task<T> AdicionarAsync(T entity)
     {
         await _dbSet.AddAsync(entity);
         await _context.SaveChangesAsync();

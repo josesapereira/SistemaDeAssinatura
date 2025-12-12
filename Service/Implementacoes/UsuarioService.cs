@@ -12,23 +12,29 @@ namespace Service.Implementacoes;
 public class UsuarioService : IUsuarioService
 {
     private readonly IUsuarioRepository _usuarioRepository;
+    private readonly IRegistroAbilityRepository _registroAbilityRepository;
     private readonly UserManager<Usuario> _userManager;
     private readonly SignInManager<Usuario> _signInManager;
     private readonly IMapper _mapper;
     private readonly IEmailService _emailService;
+    private readonly IFileStorageService _fileStorageService;
 
     public UsuarioService(
         IUsuarioRepository usuarioRepository,
+        IRegistroAbilityRepository registroAbilityRepository,
         UserManager<Usuario> userManager,
         SignInManager<Usuario> signInManager,
         IMapper mapper,
-        IEmailService emailService)
+        IEmailService emailService,
+        IFileStorageService fileStorageService)
     {
         _usuarioRepository = usuarioRepository;
+        _registroAbilityRepository = registroAbilityRepository;
         _userManager = userManager;
         _signInManager = signInManager;
         _mapper = mapper;
         _emailService = emailService;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<bool> ValidarSenhaPadraoAsync(string senha)
@@ -36,9 +42,9 @@ public class UsuarioService : IUsuarioService
         return senha == "123456";
     }
 
-    public async Task<RespostaDTO<object>> AutenticarAsync(LoginDTO loginDTO)
+    public async Task<RespostaDTO<DadosLogin>> AutenticarAsync(LoginDTO loginDTO)
     {
-        var resposta = new RespostaDTO<object>();
+        var resposta = new RespostaDTO<DadosLogin>();
 
         var usuario = await _usuarioRepository.GetByUsernameAsync(loginDTO.Username);
         if (usuario == null)
@@ -56,22 +62,23 @@ public class UsuarioService : IUsuarioService
             return resposta;
         }
 
+        var claim = new Claim("TemporaryAuth", "true");
+        var existingClaim = await _userManager.GetClaimsAsync(usuario);
+        if (!existingClaim.Any(c => c.Type == "TemporaryAuth"))
+        {
+            await _userManager.AddClaimAsync(usuario, claim);
+        }
+        await _signInManager.SignInAsync(usuario, isPersistent: false);
         // Verificar se é senha padrão e primeiro acesso
         var isSenhaPadrao = await ValidarSenhaPadraoAsync(loginDTO.Senha);
         if (isSenhaPadrao && usuario.PrimeiroAcesso && !usuario.DoisFatoresAtivo)
         {
             // Autenticação temporária para primeiro acesso
             // Adicionar claim temporário ao usuário
-            var claim = new Claim("TemporaryAuth", "true");
-            var existingClaim = await _userManager.GetClaimsAsync(usuario);
-            if (!existingClaim.Any(c => c.Type == "TemporaryAuth"))
-            {
-                await _userManager.AddClaimAsync(usuario, claim);
-            }
-            await _signInManager.SignInAsync(usuario, isPersistent: false);
+
             resposta.Sucesso = true;
             resposta.Mensagem = "Primeiro acesso detectado. Redirecionando para alteração de senha.";
-            resposta.Dados = new { TipoAutenticacao = "Temporaria", RedirectTo = "/alterar-senha" };
+            resposta.Dados = new DadosLogin { TipoAutenticacao = "Temporaria", RedirectTo = "alterar-senha" };
             return resposta;
         }
 
@@ -80,7 +87,7 @@ public class UsuarioService : IUsuarioService
         {
             resposta.Sucesso = true;
             resposta.Mensagem = "2FA ativo. Redirecionando para validação.";
-            resposta.Dados = new { TipoAutenticacao = "2FA", RedirectTo = "/validar-2fa", Username = usuario.UserName };
+            resposta.Dados = new DadosLogin { TipoAutenticacao = "2FA", RedirectTo = "validar-2fa", Username = usuario.UserName };
             return resposta;
         }
 
@@ -88,7 +95,7 @@ public class UsuarioService : IUsuarioService
         await _signInManager.SignInAsync(usuario, isPersistent: true);
         resposta.Sucesso = true;
         resposta.Mensagem = "Login realizado com sucesso";
-        resposta.Dados = new { TipoAutenticacao = "Completa", RedirectTo = "/home" };
+        resposta.Dados = new DadosLogin { TipoAutenticacao = "Completa", RedirectTo = "ativar-2fa" };
         return resposta;
     }
 
@@ -145,7 +152,7 @@ public class UsuarioService : IUsuarioService
         }
 
         usuario.PrimeiroAcesso = false;
-        await _usuarioRepository.SalvarAsync(usuario);
+        await _usuarioRepository.AtualizarAsync(usuario);
 
         resposta.Sucesso = true;
         resposta.Mensagem = "Senha alterada com sucesso";
@@ -216,7 +223,8 @@ public class UsuarioService : IUsuarioService
         }
 
         usuario.DoisFatoresAtivo = true;
-        await _usuarioRepository.SalvarAsync(usuario);
+        usuario.TwoFactorEnabled = true;
+        await _usuarioRepository.AtualizarAsync(usuario);
 
         // Remover claim temporário se existir
         var temporaryClaim = (await _userManager.GetClaimsAsync(usuario))
@@ -227,17 +235,17 @@ public class UsuarioService : IUsuarioService
         }
 
         // Fazer login completo após ativar 2FA
-        await _signInManager.SignInAsync(usuario, isPersistent: true);
+        await _signInManager.SignInAsync(usuario, isPersistent: false);
 
         resposta.Sucesso = true;
         resposta.Mensagem = "2FA ativado com sucesso";
-        resposta.Dados = new { RedirectTo = "/home" };
+        resposta.Dados = new { RedirectTo = "/usuarios" };
         return resposta;
     }
 
-    public async Task<RespostaDTO<object>> Validar2FAAsync(Validacao2FADTO validacao2FADTO)
+    public async Task<RespostaDTO<DadosLogin>> Validar2FAAsync(Validacao2FADTO validacao2FADTO)
     {
-        var resposta = new RespostaDTO<object>();
+        var resposta = new RespostaDTO<DadosLogin>();
 
         var usuario = await _usuarioRepository.GetByUsernameAsync(validacao2FADTO.Username);
         if (usuario == null)
@@ -265,13 +273,20 @@ public class UsuarioService : IUsuarioService
             resposta.Mensagem = "Código 2FA inválido";
             return resposta;
         }
+        var temporaryClaim = (await _userManager.GetClaimsAsync(usuario))
+    .FirstOrDefault(c => c.Type == "TemporaryAuth");
+        if (temporaryClaim != null)
+        {
+            await _userManager.RemoveClaimAsync(usuario, temporaryClaim);
+        }
+
 
         // Login completo após validar 2FA
-        await _signInManager.SignInAsync(usuario, isPersistent: true);
+        await _signInManager.SignInAsync(usuario, isPersistent: false);
 
         resposta.Sucesso = true;
         resposta.Mensagem = "2FA validado com sucesso";
-        resposta.Dados = new { RedirectTo = "/home" };
+        resposta.Dados = new DadosLogin { RedirectTo = "/usuarios" };
         return resposta;
     }
 
@@ -290,6 +305,232 @@ public class UsuarioService : IUsuarioService
         using var qrCode = new PngByteQRCode(qrCodeData);
         var qrCodeBytes = qrCode.GetGraphic(20);
         return Convert.ToBase64String(qrCodeBytes);
+    }
+
+    public async Task<RespostaDTO<object>> CriarUsuarioAsync(CriarUsuarioDTO dto)
+    {
+        var resposta = new RespostaDTO<object>();
+
+        // Validar se RE existe em RegistroAbility
+        var registroAbility = await _registroAbilityRepository.GetByREAsync(dto.RE);
+        if (registroAbility == null)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "RE não encontrado no RegistroAbility";
+            resposta.Erros.Add("RE não encontrado no RegistroAbility");
+            return resposta;
+        }
+
+        // Validar se usuário já existe
+        var usuarioExiste = await _usuarioRepository.UsuarioExisteAsync(dto.RE);
+        if (usuarioExiste)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Usuário já existe com este RE";
+            resposta.Erros.Add("Usuário já existe com este RE");
+            return resposta;
+        }
+
+        // Criar usuário no Identity
+        var usuario = new Usuario
+        {
+            UserName = dto.RE,
+            Email = dto.Email,
+            Ativo = dto.Ativo,
+            PrimeiroAcesso = true,
+            DoisFatoresAtivo = false
+        };
+
+        var resultado = await _userManager.CreateAsync(usuario, "123456");
+        if (!resultado.Succeeded)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Erro ao criar usuário";
+            resposta.Erros.AddRange(resultado.Errors.Select(e => e.Description));
+            return resposta;
+        }
+
+        // Processar upload se fornecido
+        if (dto.Arquivo != null && dto.Arquivo.Length > 0)
+        {
+            try
+            {
+                var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.Arquivo);
+                usuario.ArquivoUpload = caminhoArquivo;
+                await _usuarioRepository.AdicionarAsync(usuario);
+            }
+            catch (Exception ex)
+            {
+                resposta.Sucesso = false;
+                resposta.Mensagem = $"Erro ao salvar arquivo: {ex.Message}";
+                return resposta;
+            }
+        }
+
+        resposta.Sucesso = true;
+        resposta.Mensagem = "Usuário criado com sucesso";
+        return resposta;
+    }
+
+    public async Task<RespostaDTO<object>> AtualizarUsuarioAsync(Guid id, AtualizarUsuarioDTO dto)
+    {
+        var resposta = new RespostaDTO<object>();
+
+        var usuario = await _usuarioRepository.GetByIdAsync(id);
+        if (usuario == null)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Usuário não encontrado";
+            return resposta;
+        }
+
+        // Atualizar propriedades
+        usuario.Email = dto.Email;
+        usuario.Ativo = dto.Ativo;
+
+        // Processar upload se fornecido
+        if (dto.Arquivo != null && dto.Arquivo.Length > 0)
+        {
+            try
+            {
+                // Excluir arquivo anterior se existir
+                if (!string.IsNullOrEmpty(usuario.ArquivoUpload))
+                {
+                    await _fileStorageService.ExcluirArquivoAsync(usuario.ArquivoUpload);
+                }
+
+                var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.Arquivo);
+                usuario.ArquivoUpload = caminhoArquivo;
+            }
+            catch (Exception ex)
+            {
+                resposta.Sucesso = false;
+                resposta.Mensagem = $"Erro ao salvar arquivo: {ex.Message}";
+                return resposta;
+            }
+        }
+
+        var resultado = await _userManager.UpdateAsync(usuario);
+        if (!resultado.Succeeded)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Erro ao atualizar usuário";
+            resposta.Erros.AddRange(resultado.Errors.Select(e => e.Description));
+            return resposta;
+        }
+
+        resposta.Sucesso = true;
+        resposta.Mensagem = "Usuário atualizado com sucesso";
+        return resposta;
+    }
+
+    public async Task<RespostaDTO<object>> ResetarSenhaAsync(string re)
+    {
+        var resposta = new RespostaDTO<object>();
+
+        var usuario = await _usuarioRepository.GetByREAsync(re);
+        if (usuario == null)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Usuário não encontrado";
+            return resposta;
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(usuario);
+        var resultado = await _userManager.ResetPasswordAsync(usuario, token, "123456");
+
+        if (!resultado.Succeeded)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Erro ao resetar senha";
+            resposta.Erros.AddRange(resultado.Errors.Select(e => e.Description));
+            return resposta;
+        }
+
+        usuario.PrimeiroAcesso = true;
+        await _usuarioRepository.AdicionarAsync(usuario);
+
+        resposta.Sucesso = true;
+        resposta.Mensagem = "Senha resetada com sucesso para '123456'";
+        return resposta;
+    }
+
+    public async Task<RespostaDTO<object>> Resetar2FAAsync(string re)
+    {
+        var resposta = new RespostaDTO<object>();
+
+        var usuario = await _usuarioRepository.GetByREAsync(re);
+        if (usuario == null)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Usuário não encontrado";
+            return resposta;
+        }
+
+        usuario.DoisFatoresAtivo = false;
+        await _userManager.ResetAuthenticatorKeyAsync(usuario);
+        await _usuarioRepository.AdicionarAsync(usuario);
+
+        resposta.Sucesso = true;
+        resposta.Mensagem = "2FA resetado com sucesso";
+        return resposta;
+    }
+
+    public async Task<RespostaDTO<List<UsuarioListagemDTO>>> ListarUsuariosAsync()
+    {
+        var resposta = new RespostaDTO<List<UsuarioListagemDTO>>();
+
+        var usuarios = await _usuarioRepository.GetAllAsync();
+        var listaDTO = new List<UsuarioListagemDTO>();
+
+        foreach (var usuario in usuarios)
+        {
+            var registroAbility = await _registroAbilityRepository.GetByREAsync(usuario.UserName ?? "");
+            
+            listaDTO.Add(new UsuarioListagemDTO
+            {
+                Id = usuario.Id,
+                RE = usuario.UserName ?? "",
+                Nome = registroAbility?.Nome ?? "",
+                Email = usuario.Email ?? "",
+                Ativo = usuario.Ativo
+            });
+        }
+
+        resposta.Sucesso = true;
+        resposta.Mensagem = "Lista de usuários carregada com sucesso";
+        resposta.Dados = listaDTO;
+        return resposta;
+    }
+
+    public async Task<RespostaDTO<UsuarioDetalhesDTO>> ObterUsuarioPorREAsync(string re)
+    {
+        var resposta = new RespostaDTO<UsuarioDetalhesDTO>();
+
+        var usuario = await _usuarioRepository.GetByREAsync(re);
+        if (usuario == null)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = "Usuário não encontrado";
+            return resposta;
+        }
+
+        var registroAbility = await _registroAbilityRepository.GetByREAsync(re);
+        
+        var detalhesDTO = new UsuarioDetalhesDTO
+        {
+            Id = usuario.Id,
+            RE = usuario.UserName ?? "",
+            Nome = registroAbility?.Nome ?? "",
+            Email = usuario.Email ?? "",
+            Ativo = usuario.Ativo,
+            ArquivoUpload = usuario.ArquivoUpload
+        };
+
+        resposta.Sucesso = true;
+        resposta.Mensagem = "Usuário encontrado";
+        resposta.Dados = detalhesDTO;
+        return resposta;
     }
 }
 
