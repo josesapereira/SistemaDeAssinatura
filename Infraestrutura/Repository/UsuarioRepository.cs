@@ -11,6 +11,8 @@ public class UsuarioRepository : BaseRepository<Usuario>, IUsuarioRepository
 {
     public UsuarioRepository(AppDbContext context) : base(context)
     {
+        //if(context.)
+        context.Database.OpenConnectionAsync().GetAwaiter().GetResult();
     }
 
     public async Task<Usuario?> GetByUsernameAsync(string username)
@@ -84,7 +86,7 @@ public class UsuarioRepository : BaseRepository<Usuario>, IUsuarioRepository
         return await _dbSet
             .Include(u => u.Roles)
             .ThenInclude(ur => ur.Role)
-            .FirstOrDefaultAsync(u => u.Id == id);
+            .FirstOrDefaultAsync(u => u.Id.ToString() == id.ToString());
     }
 }
 

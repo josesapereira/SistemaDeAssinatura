@@ -10,7 +10,7 @@ public class AppDbContext : IdentityDbContext<Usuario, Role, Guid>
     {
     }
 
-    public DbSet<RegistroAbility> RegistroAbilities { get; set; }
+    public DbSet<RegistroAbility> RegistroAbility { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

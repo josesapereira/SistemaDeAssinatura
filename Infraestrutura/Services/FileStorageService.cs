@@ -1,6 +1,7 @@
 using Domain.Interfaces.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using System.IO.Pipelines;
 
 namespace Infraestrutura.Services;
 
@@ -14,14 +15,14 @@ public class FileStorageService : IFileStorageService
         _environment = environment;
     }
 
-    public async Task<string> SalvarArquivoAsync(IFormFile arquivo, string pasta = "uploads")
+    public async Task<string> SalvarArquivoAsync(byte[] arquivo, string fileName)
     {
         if (arquivo == null || arquivo.Length == 0)
-            throw new ArgumentException("Arquivo inválido");
+            throw new ArgumentException("NomeDoArquivo inválido");
 
         // Gera um nome único para o arquivo
-        var extension = Path.GetExtension(arquivo.FileName);
-        var fileName = $"{Guid.NewGuid()}{extension}";
+        //var extension = Path.GetExtension(a);
+        //var fileName = $"{Guid.NewGuid()}{extension}";
         
         // Se tiver ambiente, salva o arquivo
         // Nota: IHostEnvironment não tem WebRootPath, então vamos usar ContentRootPath
@@ -29,7 +30,9 @@ public class FileStorageService : IFileStorageService
         {
             var wwwrootPath = Path.Combine(_environment.ContentRootPath, "wwwroot");
             var uploadPath = Path.Combine(wwwrootPath, BaseUploadPath);
-            
+            var Memory = new MemoryStream();
+            await Memory.WriteAsync(arquivo);
+            Memory.Position = 0;
             if (!Directory.Exists(uploadPath))
             {
                 Directory.CreateDirectory(uploadPath);
@@ -39,12 +42,12 @@ public class FileStorageService : IFileStorageService
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                await arquivo.CopyToAsync(stream);
+                await stream.CopyToAsync(Memory);
             }
         }
         
         // Retorna o caminho relativo que será usado pela aplicação
-        return $"/{BaseUploadPath}/{fileName}";
+        return $"{fileName}";
     }
 
     public async Task<bool> ExcluirArquivoAsync(string caminhoArquivo)

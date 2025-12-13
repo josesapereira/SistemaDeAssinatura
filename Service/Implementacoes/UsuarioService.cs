@@ -3,7 +3,9 @@ using Domain.DTOs;
 using Domain.Interfaces.Repository;
 using Domain.Interfaces.Service;
 using Domain.Models;
+using Infraestrutura.Contexto;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using System.Security.Claims;
 
@@ -18,6 +20,7 @@ public class UsuarioService : IUsuarioService
     private readonly IMapper _mapper;
     private readonly IEmailService _emailService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly AppDbContext _context;
 
     public UsuarioService(
         IUsuarioRepository usuarioRepository,
@@ -26,7 +29,8 @@ public class UsuarioService : IUsuarioService
         SignInManager<Usuario> signInManager,
         IMapper mapper,
         IEmailService emailService,
-        IFileStorageService fileStorageService)
+        IFileStorageService fileStorageService,
+        AppDbContext context)
     {
         _usuarioRepository = usuarioRepository;
         _registroAbilityRepository = registroAbilityRepository;
@@ -35,6 +39,7 @@ public class UsuarioService : IUsuarioService
         _mapper = mapper;
         _emailService = emailService;
         _fileStorageService = fileStorageService;
+        _context = context;
     }
 
     public async Task<bool> ValidarSenhaPadraoAsync(string senha)
@@ -311,32 +316,34 @@ public class UsuarioService : IUsuarioService
     {
         var resposta = new RespostaDTO<object>();
 
-        // Validar se RE existe em RegistroAbility
-        var registroAbility = await _registroAbilityRepository.GetByREAsync(dto.RE);
+        // Validar se UserName existe em RegistroAbility
+        var registroAbility = await _registroAbilityRepository.GetByREAsync(dto.UserName);
         if (registroAbility == null)
         {
             resposta.Sucesso = false;
-            resposta.Mensagem = "RE não encontrado no RegistroAbility";
-            resposta.Erros.Add("RE não encontrado no RegistroAbility");
+            resposta.Mensagem = "UserName não encontrado no RegistroAbility";
+            resposta.Erros.Add("UserName não encontrado no RegistroAbility");
             return resposta;
         }
 
         // Validar se usuário já existe
-        var usuarioExiste = await _usuarioRepository.UsuarioExisteAsync(dto.RE);
+        var usuarioExiste = await _usuarioRepository.UsuarioExisteAsync(dto.UserName);
         if (usuarioExiste)
         {
             resposta.Sucesso = false;
-            resposta.Mensagem = "Usuário já existe com este RE";
-            resposta.Erros.Add("Usuário já existe com este RE");
+            resposta.Mensagem = "Usuário já existe com este UserName";
+            resposta.Erros.Add("Usuário já existe com este UserName");
             return resposta;
         }
 
         // Criar usuário no Identity
         var usuario = new Usuario
         {
-            UserName = dto.RE,
+            UserName = dto.UserName,
+            Nome = dto.Nome,
             Email = dto.Email,
             Ativo = dto.Ativo,
+            NomeDoArquivo = dto.NomeDoArquivo,
             PrimeiroAcesso = true,
             DoisFatoresAtivo = false
         };
@@ -350,14 +357,31 @@ public class UsuarioService : IUsuarioService
             return resposta;
         }
 
+        // Atribuir role se fornecida
+        if (dto.RoleId.HasValue && dto.RoleId.Value != Guid.Empty)
+        {
+            var role = await _context.Set<Role>().FindAsync(dto.RoleId.Value);
+            if (role != null && !string.IsNullOrEmpty(role.Name))
+            {
+                var roleResult = await _userManager.AddToRoleAsync(usuario, role.Name);
+                if (!roleResult.Succeeded)
+                {
+                    resposta.Sucesso = false;
+                    resposta.Mensagem = "Usuário criado, mas erro ao atribuir role";
+                    resposta.Erros.AddRange(roleResult.Errors.Select(e => e.Description));
+                    return resposta;
+                }
+            }
+        }
+
         // Processar upload se fornecido
-        if (dto.Arquivo != null && dto.Arquivo.Length > 0)
+        if (dto.ArquivoUpload != null && dto.ArquivoUpload.Length > 0)
         {
             try
             {
-                var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.Arquivo);
-                usuario.ArquivoUpload = caminhoArquivo;
-                await _usuarioRepository.AdicionarAsync(usuario);
+                var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.ArquivoUpload,dto.NomeDoArquivo);
+                //usuario.NomeDoArquivo = caminhoArquivo;
+                //await _usuarioRepository.AdicionarAsync(usuario);
             }
             catch (Exception ex)
             {
@@ -372,11 +396,11 @@ public class UsuarioService : IUsuarioService
         return resposta;
     }
 
-    public async Task<RespostaDTO<object>> AtualizarUsuarioAsync(Guid id, AtualizarUsuarioDTO dto)
+    public async Task<RespostaDTO<object>> AtualizarUsuarioAsync(CriarUsuarioDTO dto)
     {
         var resposta = new RespostaDTO<object>();
 
-        var usuario = await _usuarioRepository.GetByIdAsync(id);
+        var usuario = await _usuarioRepository.GetByIdAsync(dto.Id);
         if (usuario == null)
         {
             resposta.Sucesso = false;
@@ -385,22 +409,25 @@ public class UsuarioService : IUsuarioService
         }
 
         // Atualizar propriedades
-        usuario.Email = dto.Email;
-        usuario.Ativo = dto.Ativo;
+
 
         // Processar upload se fornecido
-        if (dto.Arquivo != null && dto.Arquivo.Length > 0)
+        if (dto.ArquivoUpload != null && dto.ArquivoUpload.Length > 0)
         {
             try
             {
                 // Excluir arquivo anterior se existir
-                if (!string.IsNullOrEmpty(usuario.ArquivoUpload))
+                if(dto.NomeDoArquivo == usuario.NomeDoArquivo)
                 {
-                    await _fileStorageService.ExcluirArquivoAsync(usuario.ArquivoUpload);
+                    if (!string.IsNullOrEmpty(usuario.NomeDoArquivo))
+                    {
+                        await _fileStorageService.ExcluirArquivoAsync(usuario.NomeDoArquivo);
+                    }
                 }
+               
 
-                var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.Arquivo);
-                usuario.ArquivoUpload = caminhoArquivo;
+                var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.ArquivoUpload,dto.NomeDoArquivo);
+                //usuario.NomeDoArquivo = caminhoArquivo;
             }
             catch (Exception ex)
             {
@@ -409,6 +436,9 @@ public class UsuarioService : IUsuarioService
                 return resposta;
             }
         }
+        usuario.Email = dto.Email;
+        usuario.Ativo = dto.Ativo;
+        usuario.Nome = dto.NomeDoArquivo;
 
         var resultado = await _userManager.UpdateAsync(usuario);
         if (!resultado.Succeeded)
@@ -485,15 +515,16 @@ public class UsuarioService : IUsuarioService
 
         foreach (var usuario in usuarios)
         {
-            var registroAbility = await _registroAbilityRepository.GetByREAsync(usuario.UserName ?? "");
+            //var registroAbility = await _registroAbilityRepository.GetByREAsync(usuario.UserName ?? "");
             
             listaDTO.Add(new UsuarioListagemDTO
             {
                 Id = usuario.Id,
                 RE = usuario.UserName ?? "",
-                Nome = registroAbility?.Nome ?? "",
+                Nome = usuario?.Nome ?? "",
                 Email = usuario.Email ?? "",
-                Ativo = usuario.Ativo
+                Ativo = usuario.Ativo,
+                RoleId = usuario.Roles.FirstOrDefault()?.Role.Id ?? Guid.Empty
             });
         }
 
@@ -524,13 +555,32 @@ public class UsuarioService : IUsuarioService
             Nome = registroAbility?.Nome ?? "",
             Email = usuario.Email ?? "",
             Ativo = usuario.Ativo,
-            ArquivoUpload = usuario.ArquivoUpload
+            ArquivoUpload = usuario.NomeDoArquivo
         };
 
         resposta.Sucesso = true;
         resposta.Mensagem = "Usuário encontrado";
         resposta.Dados = detalhesDTO;
         return resposta;
+    }
+
+    public async Task<CriarUsuarioDTO> GetByIdAsync(Guid id)
+    {
+
+        var usuario = await _usuarioRepository.GetByIdAsync(id);
+
+        var detalhesDTO = new CriarUsuarioDTO
+        {
+            Id = usuario.Id,
+            UserName = usuario.UserName,
+            Nome = usuario.Nome,
+            Email = usuario.Email ?? "",
+            Ativo = usuario.Ativo,
+            RoleId = usuario.Roles.FirstOrDefault()?.Role.Id
+            //NomeDoArquivo = usuario.NomeDoArquivo
+        };
+
+        return detalhesDTO;
     }
 }
 

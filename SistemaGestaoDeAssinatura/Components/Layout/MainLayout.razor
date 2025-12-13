@@ -26,7 +26,7 @@
 
 <RadzenComponents @rendermode="InteractiveAuto" />
 <CarregamentoCompleto Value="@carregando" />
-@*
+
 <CascadingValue Value="this">
     <AuthorizeView>
         <RadzenLayout Style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'; position: relative;">
@@ -49,19 +49,19 @@
                     <RadzenStack AlignItems="AlignItems.Center" class="rz-py-3 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding); border-bottom: var(--rz-panel-menu-item-border);">
                         <RadzenImage Path="@("./Icone.png?ts=" + DateTime.Now.Ticks)" style="width: 40px; height: 40px;" AlternateText="Logo"></RadzenImage>
 
-                        <RadzenText Text="@(sidebarExpanded ? "SISTEMA COTA EXTRA DE COMBUSTÍVEL" : "SCE")" TextStyle="TextStyle.Subtitle1" class="rz-mb-0 text-center" style="color: var(--rz-sidebar-color); font-size:14px" />
+                        <RadzenText Text="@(sidebarExpanded ? "SISTEMA GESTÂO DE ASSINATURAS" : "SGA")" TextStyle="TextStyle.Subtitle1" class="rz-mb-0 text-center" style="color: var(--rz-sidebar-color); font-size:14px" />
                     </RadzenStack>
 
                     <RadzenPanelMenu DisplayStyle="@DisplayStyle" Style="flex-grow: 1;" class="menu shadow-none">
-                        <RadzenPanelMenuItem Icon="dashboard" Text="Dashboard" Path="dashboard" Visible="@(!isRH)" />
+                        <RadzenPanelMenuItem Icon="dashboard" Text="Dashboard" Path="dashboard" />
 
                         <RadzenPanelMenuItem Icon="local_gas_station" Text="Justificativa de combustível" Path="ListaJustificativadeCombustivel" />
 
-                        <RadzenPanelMenuItem Icon="credit_card_gear" Text="Gerenciamento de recarga" Visible="@(isAdmin)" Path="ListaProcessamentoRecarga" />
+                        <RadzenPanelMenuItem Icon="credit_card_gear" Text="Gerenciamento de recarga" Path="ListaProcessamentoRecarga" />
 
-                        <RadzenPanelMenuItem Icon="request_quote" Text="Lista de descontos" Visible="@(isAdmin || isRH)" Path="ListaDeDesconto" />
+                        <RadzenPanelMenuItem Icon="request_quote" Text="Lista de descontos" Path="ListaDeDesconto" />
 
-                        <RadzenPanelMenuItem Icon="settings" Text="Cadastros" Visible="@(isAdmin || isFrota)">
+                        <RadzenPanelMenuItem Icon="settings" Text="Cadastros">
                             <RadzenPanelMenuItem Icon="receipt" Text="Lista de centro de custo" Path="ListaCentroDeCusto" />
 
                             <RadzenPanelMenuItem Icon="fact_check" Text="Fluxo de aprovação" Path="ListaFluxoDeAprovacao" />
@@ -71,7 +71,7 @@
                             <RadzenPanelMenuItem Icon="group_add" Text="Usuários" Path="usuarios" />
                         </RadzenPanelMenuItem>
 
-                        <RadzenPanelMenuItem Visible="@isAdmin" Icon="schedule" Text="Log geral" Path="ListaLogGeral" />
+                        <RadzenPanelMenuItem Icon="schedule" Text="Log geral" Path="ListaLogGeral" />
                     </RadzenPanelMenu>
 
                     <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0" class="p-2">
@@ -79,7 +79,7 @@
 
                         @if (sidebarExpanded)
                         {
-                            <RadzenText Text="@($"{KeyCloak.Versao}")" TextStyle="TextStyle.Caption" TagName="TagName.P" TextAlign="TextAlign.Center" Style="color: var(--rz-sidebar-color); font-size: 8px;" />
+                            <RadzenText Text="@($"1.0.0.0")" TextStyle="TextStyle.Caption" TagName="TagName.P" TextAlign="TextAlign.Center" Style="color: var(--rz-sidebar-color); font-size: 8px;" />
                             <RadzenText Text="ABILITY TECNOLOGIA" TextStyle="TextStyle.Overline" TagName="TagName.P" TextAlign="TextAlign.Center" Style="color: var(--rz-sidebar-color); font-size: 8px;" />
 
                             <RadzenText Text="COPYRIGHT Ⓒ 2025" TextStyle="TextStyle.Overline" class="rz-mb-0" TagName="TagName.P" TextAlign="TextAlign.Center" Style="color: var(--rz-sidebar-color); font-size: 8px;" />
@@ -89,4 +89,4 @@
             </RadzenSidebar>
         </RadzenLayout>
     </AuthorizeView>
-</CascadingValue> *@
+</CascadingValue>

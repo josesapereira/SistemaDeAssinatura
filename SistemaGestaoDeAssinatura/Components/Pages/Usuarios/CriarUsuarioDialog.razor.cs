@@ -19,99 +19,103 @@ public partial class CriarUsuarioDialog : ComponentBase
     public IRegistroAbilityRepository RegistroAbilityRepository { get; set; } = null!;
 
     [Inject]
+    public IRoleRepository RoleRepository { get; set; } = null!;
+
+    [Inject]
     public DialogService DialogService { get; set; } = null!;
 
     [Inject]
     public NotificationService NotificationService { get; set; } = null!;
 
     private CriarUsuarioDTO model = new();
-    private List<RegistroAbility> registroAbilities = new();
+    private List<Role> roles = new();
     private string nomeSelecionado = string.Empty;
     private IFormFile? arquivoSelecionado;
     private string? arquivoAtual;
     private bool modoEdicao => UsuarioId.HasValue;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await CarregarRegistroAbilities();
-
-        if (modoEdicao && UsuarioId.HasValue)
+        if (firstRender)
         {
-            await CarregarUsuarioParaEdicao();
+            await CarregarRoles();
+
+            if (modoEdicao && UsuarioId.HasValue)
+            {
+                await CarregarUsuarioParaEdicao();
+            }
         }
     }
 
-    private async Task CarregarRegistroAbilities()
+    private async Task CarregarRoles()
     {
-        registroAbilities = await RegistroAbilityRepository.GetAllAsync();
+        roles = await RoleRepository.GetAllAsync();
+        StateHasChanged();
     }
 
     private async Task CarregarUsuarioParaEdicao()
     {
         if (!UsuarioId.HasValue) return;
 
-        var usuarios = await UsuarioService.ListarUsuariosAsync();
-        if (usuarios.Sucesso && usuarios.Dados != null)
+        var usuario = await UsuarioService.GetByIdAsync(UsuarioId.Value);
+        if (usuario != null)
         {
-            var usuario = usuarios.Dados.FirstOrDefault(u => u.Id == UsuarioId.Value);
-            if (usuario != null)
+            model = usuario;
+            StateHasChanged();
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
             {
-                var detalhes = await UsuarioService.ObterUsuarioPorREAsync(usuario.RE);
-                if (detalhes.Sucesso && detalhes.Dados != null)
-                {
-                    model.RE = detalhes.Dados.RE;
-                    model.Email = detalhes.Dados.Email;
-                    model.Ativo = detalhes.Dados.Ativo;
-                    nomeSelecionado = detalhes.Dados.Nome;
-                    arquivoAtual = detalhes.Dados.ArquivoUpload;
-
-                    // Buscar o RegistroAbility correspondente
-                    var registro = await RegistroAbilityRepository.GetByREAsync(model.RE);
-                    if (registro != null)
-                    {
-                        nomeSelecionado = registro.Nome;
-                    }
-                }
-            }
+                Severity = NotificationSeverity.Error,
+                Summary = "Erro",
+                Detail = "Usuário não encontrado"
+            });
         }
     }
 
-    private async Task OnREChanged(object? value)
+    private async Task OnREChanged()
     {
-        if (value is string re && !string.IsNullOrEmpty(re))
+        if (!string.IsNullOrWhiteSpace(model.UserName))
         {
-            var registro = await RegistroAbilityRepository.GetByREAsync(re);
+            var registro = await RegistroAbilityRepository.GetByREAsync(model.UserName);
             if (registro != null)
             {
-                nomeSelecionado = registro.Nome;
+                model.Nome = registro.Nome;
+            }
+            else
+            {
+                model.Nome = string.Empty;
             }
         }
         else
         {
             nomeSelecionado = string.Empty;
         }
+        
+        StateHasChanged();
     }
 
     private async Task OnSubmit()
     {
-        if (string.IsNullOrEmpty(model.RE))
+        if (string.IsNullOrEmpty(model.UserName))
         {
-            NotificationService.Notify(new NotificationMessage 
-            { 
-                Severity = NotificationSeverity.Error, 
-                Summary = "Erro", 
-                Detail = "RE é obrigatório" 
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Erro",
+                Detail = "UserName é obrigatório"
             });
             return;
         }
 
         if (string.IsNullOrEmpty(model.Email))
         {
-            NotificationService.Notify(new NotificationMessage 
-            { 
-                Severity = NotificationSeverity.Error, 
-                Summary = "Erro", 
-                Detail = "Email é obrigatório" 
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Erro",
+                Detail = "Email é obrigatório"
             });
             return;
         }
@@ -119,20 +123,14 @@ public partial class CriarUsuarioDialog : ComponentBase
         // Adicionar arquivo ao modelo se foi selecionado
         if (arquivoSelecionado != null)
         {
-            model.Arquivo = arquivoSelecionado;
+            //model.ArquivoUpload = arquivoSelecionado;
         }
 
         RespostaDTO<object> resultado;
 
         if (modoEdicao && UsuarioId.HasValue)
         {
-            var atualizarDTO = new AtualizarUsuarioDTO
-            {
-                Email = model.Email,
-                Ativo = model.Ativo,
-                Arquivo = model.Arquivo
-            };
-            resultado = await UsuarioService.AtualizarUsuarioAsync(UsuarioId.Value, atualizarDTO);
+            resultado = await UsuarioService.AtualizarUsuarioAsync(model);
         }
         else
         {
@@ -141,21 +139,21 @@ public partial class CriarUsuarioDialog : ComponentBase
 
         if (resultado.Sucesso)
         {
-            NotificationService.Notify(new NotificationMessage 
-            { 
-                Severity = NotificationSeverity.Success, 
-                Summary = "Sucesso", 
-                Detail = resultado.Mensagem 
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Sucesso",
+                Detail = resultado.Mensagem
             });
             DialogService.Close(true);
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage 
-            { 
-                Severity = NotificationSeverity.Error, 
-                Summary = "Erro", 
-                Detail = resultado.Mensagem 
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Erro",
+                Detail = resultado.Mensagem
             });
         }
     }
@@ -163,6 +161,44 @@ public partial class CriarUsuarioDialog : ComponentBase
     private void Cancelar()
     {
         DialogService.Close();
+    }
+    private async Task UploadRepitidas(UploadChangeEventArgs upload)
+    {
+        try
+        {
+            //var convert = new ConvertCSVToClass();
+            if (!upload.Files.Any()) return;
+
+            //await carregamentoCompleto.LoadOnOff(true, upload.Files.Count(), 0);
+            foreach (var arquivo in upload.Files)
+            {
+                try
+                {
+                    if (arquivo == null) return;
+                    string nomeNovo = Guid.NewGuid().ToString() + Path.GetExtension(arquivo.Name);
+                    var stream = arquivo.OpenReadStream(20240000);
+                    MemoryStream memoryStream = new();
+                    await stream.CopyToAsync(memoryStream);
+                    model.ArquivoUpload = memoryStream.ToArray();
+                    model.NomeDoArquivo = nomeNovo;
+                    //(20240000)
+                    //var arquivo = await reader();
+
+                }
+                catch (Exception ex)
+                {
+        
+                }
+              
+
+            }
+          
+
+        }
+        catch (Exception ex)
+        {
+
+        }
     }
 }
 

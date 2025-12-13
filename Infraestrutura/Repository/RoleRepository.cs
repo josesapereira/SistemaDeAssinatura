@@ -2,6 +2,7 @@ using Domain.Models;
 using Domain.Interfaces.Repository;
 using Infraestrutura.Contexto;
 using Infraestrutura.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infraestrutura.Repository;
 
@@ -13,7 +14,7 @@ public class RoleRepository : BaseRepository<Role>, IRoleRepository
 
     public async Task<List<Role>> GetAllAsync()
     {
-        return await base.GetAllAsync(null);
+        return await _context.Roles.ToListAsync();
     }
 }
 

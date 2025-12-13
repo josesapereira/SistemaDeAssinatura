@@ -4,11 +4,12 @@ namespace Domain.Models;
 
 public class Usuario : IdentityUser<Guid>
 {
+    public string Nome { get; set; }
     public string? NomeDaFotoRegistrada { get; set; }
     public bool PrimeiroAcesso { get; set; } = true;
     public bool DoisFatoresAtivo { get; set; } = false;
     public bool Ativo { get; set; } = true;
-    public string? ArquivoUpload { get; set; }
+    public string? NomeDoArquivo { get; set; }
     public List<UsuarioRole> Roles { get; set; } = new();
 }
 

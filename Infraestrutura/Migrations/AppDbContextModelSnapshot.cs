@@ -41,7 +41,7 @@ namespace Infraestrutura.Migrations
                     b.HasIndex("RE")
                         .IsUnique();
 
-                    b.ToTable("RegistroAbilities");
+                    b.ToTable("RegistroAbility");
                 });
 
             modelBuilder.Entity("Domain.Models.Role", b =>
@@ -81,9 +81,6 @@ namespace Infraestrutura.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("ArquivoUpload")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("Ativo")
                         .HasColumnType("bit");
 
@@ -107,7 +104,14 @@ namespace Infraestrutura.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("NomeDaFotoRegistrada")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NomeDoArquivo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")

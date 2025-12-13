@@ -1,5 +1,4 @@
 ﻿@using Radzen
-@inject DialogService DialogService
 
 <RadzenFormField class="w-100" Text="@textoFormField">
     <RadzenTextArea Rows="6" @bind-Value="Observacao" ReadOnly="@ReadOnly" />
@@ -10,38 +9,3 @@
 
     <RadzenButton Text="@textoCancelar" Click="@Cancelar" class="w-100" ButtonStyle="ButtonStyle.Light" />
 </RadzenStack>
-
-
-@code {
-    [Parameter]
-    public string Title { get; set; } = "Informe o texto";
-
-    [Parameter]
-    public bool Obrigatorio { get; set; }
-
-    [Parameter]
-    public string Observacao { get; set; } = "";
-
-    [Parameter]
-    public bool ReadOnly { get; set; }
-
-    private string textoFormField => ReadOnly ? "Observação" : Obrigatorio ? "Observação (obrigatória)" : "Observação";
-
-    private string textoCancelar => ReadOnly ? "Fechar" : "Cancelar";
-
-    private void Confirmar()
-    {
-        if (Obrigatorio && string.IsNullOrEmpty(Observacao))
-        {
-            DialogService.Alert("Observação é obrigatória.", "Alerta");
-            return;
-        }
-
-        DialogService.Close(Observacao);
-    }
-
-    private void Cancelar()
-    {
-        DialogService.Close();
-    }
-}

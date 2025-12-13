@@ -69,7 +69,7 @@ ILoggerFactory logger = LoggerFactory.Create(builder => builder.AddConsole());
 var config = new MapperConfiguration(cfg =>
 {
     cfg.AddProfile(new UsuarioProfile());
-},logger);
+}, logger);
 IMapper mapper = config.CreateMapper();
 
 builder.Services.AddSingleton(mapper);
@@ -138,25 +138,25 @@ if (!app.Environment.IsDevelopment())
 var defaultCulture = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
 CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var seeder = new DatabaseSeeder(
-            services.GetRequiredService<AppDbContext>(),
-            services.GetRequiredService<UserManager<Usuario>>(),
-            services.GetRequiredService<RoleManager<Role>>(),
-            services.GetRequiredService<ILogger<DatabaseSeeder>>());
+//using (var scope = app.Services.CreateScope())
+//{
+//    var services = scope.ServiceProvider;
+//    try
+//    {
+//        var seeder = new DatabaseSeeder(
+//            services.GetRequiredService<AppDbContext>(),
+//            services.GetRequiredService<UserManager<Usuario>>(),
+//            services.GetRequiredService<RoleManager<Role>>(),
+//            services.GetRequiredService<ILogger<DatabaseSeeder>>());
 
-        //await seeder.SeedAsync();
-    }
-    catch (Exception ex)
-    {
-        var logger2 = services.GetRequiredService<ILogger<Program>>();
-        logger2.LogError(ex, "Erro ao executar seed do banco de dados");
-    }
-}
+//        await seeder.SeedAsync();
+//    }
+//    catch (Exception ex)
+//    {
+//        var logger2 = services.GetRequiredService<ILogger<Program>>();
+//        logger2.LogError(ex, "Erro ao executar seed do banco de dados");
+//    }
+//}
 app.UseDeveloperExceptionPage();
 app.MapControllers();
 app.UseStaticFiles();

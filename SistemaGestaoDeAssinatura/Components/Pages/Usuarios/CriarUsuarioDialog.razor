@@ -1,47 +1,63 @@
 @using Domain.DTOs
 @using Radzen.Blazor
+@attribute [Authorize]
 
-<RadzenDialog>
+@* <RadzenDialog>
     <EditForm Model="@model" OnValidSubmit="@OnSubmit">
-        <RadzenStack Gap="1rem">
-            <RadzenFormField Text="RE" class="w-100">
-                <RadzenDropDown @bind-Value="@model.RE" Data="@registroAbilities" 
-                               TextProperty="RE" ValueProperty="RE" 
-                               Placeholder="Selecione o RE" 
-                               AllowClear="false"
-                               Disabled="@(modoEdicao)"
-                               Change="@OnREChanged" />
-            </RadzenFormField>
-
-            <RadzenFormField Text="Nome" class="w-100">
-                <RadzenTextBox @bind-Value="@nomeSelecionado" ReadOnly="true" />
-            </RadzenFormField>
-
-            <RadzenFormField Text="Email" class="w-100">
-                <RadzenTextBox @bind-Value="@model.Email" Placeholder="email@exemplo.com" />
-            </RadzenFormField>
-
-            <RadzenFormField Text="Ativo" class="w-100">
-                <RadzenSwitch @bind-Value="@model.Ativo" />
-            </RadzenFormField>
-
-            <RadzenFormField Text="Arquivo" class="w-100">
-                <RadzenFileInput @bind-Value="@arquivoSelecionado" 
-                                Accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                Multiple="false" />
-                @if (!string.IsNullOrEmpty(arquivoAtual))
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" class="mt-1">
-                        Arquivo atual: @arquivoAtual
-                    </RadzenText>
-                }
-            </RadzenFormField>
-
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="mt-3">
-                <RadzenButton Text="Salvar" ButtonType="ButtonType.Submit" Icon="save" />
-                <RadzenButton Text="Cancelar" ButtonStyle="ButtonStyle.Light" Click="@Cancelar" />
-            </RadzenStack>
-        </RadzenStack>
+        
     </EditForm>
-</RadzenDialog>
+</RadzenDialog> *@
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="RE" class="w-100">
+        <RadzenTextBox @bind-Value="@model.UserName"
+                       Placeholder="Digite o RE"
+                       ReadOnly="@(modoEdicao)" />
+        <RadzenButton Click="OnREChanged" Text="Pesquisar" />
+    </RadzenFormField>
 
+    <RadzenFormField Text="Nome" class="w-100">
+        <RadzenTextBox @bind-Value="@model.Nome" ReadOnly="true" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Email" class="w-100">
+        <RadzenTextBox @bind-Value="@model.Email" Placeholder="email@exemplo.com" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Role" class="w-100">
+        <RadzenDropDown @bind-Value="@model.RoleIdString"
+                        Data="@roles"
+                        TextProperty="Name"
+                        ValueProperty="IdString"
+                        Placeholder="Selecione uma Role" />
+    </RadzenFormField>
+    <RadzenStack style="width:100px">
+        <RadzenText Text="Ativo"/>
+        <RadzenSwitch @bind-Value="@model.Ativo" />
+    </RadzenStack>
+@*     <RadzenFormField Text="Ativo" >
+    </RadzenFormField> *@
+
+    <RadzenStack>
+        <RadzenUpload Accept=".jpg,.jpeg,.png"                      
+                      ChooseText="Upload Foto" InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "select file" } })"
+                      class="upload-aux"
+                      Change="UploadRepitidas" Auto="true" Multiple="false" Icon="drive_folder_upload"
+                      Style="margin-top:20px;" />
+@*         <RadzenUpload @bind-Value="@arquivoSelecionado"
+                         Accept=".jpg,.jpeg,.png"
+                         Multiple="false" /> *@
+        @if (model.ArquivoUpload  != null && model.ArquivoUpload.Length > 0)
+        {
+            <RadzenText TextStyle="TextStyle.Caption" class="mt-1">
+                @* Arquivo atual: @arquivoAtual *@
+                <RadzenImage Style="max-width:200px; max-height:200px;"
+                    Path="@($"data:image/png;base64,{Convert.ToBase64String(model.ArquivoUpload)}")" />
+            </RadzenText>
+        }
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="mt-3">
+        <RadzenButton Text="Salvar" Click="OnSubmit" Icon="save" />
+        <RadzenButton Text="Cancelar" ButtonStyle="ButtonStyle.Light" Click="@Cancelar" />
+    </RadzenStack>
+</RadzenStack>
