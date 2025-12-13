@@ -5,6 +5,7 @@ namespace Domain.Interfaces.Service;
 public interface IFileStorageService
 {
     Task<string> SalvarArquivoAsync(byte[] arquivo, string nomeArquivo);
-    Task<bool> ExcluirArquivoAsync(string caminhoArquivo);
+    Task<byte[]?> LerArquivoAsync(string fileName);
+    //Task<bool> ExcluirArquivoAsync(string caminhoArquivo);
 }
 

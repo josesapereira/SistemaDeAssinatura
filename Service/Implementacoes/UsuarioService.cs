@@ -408,26 +408,16 @@ public class UsuarioService : IUsuarioService
             return resposta;
         }
 
-        // Atualizar propriedades
-
-
-        // Processar upload se fornecido
         if (dto.ArquivoUpload != null && dto.ArquivoUpload.Length > 0)
         {
             try
             {
                 // Excluir arquivo anterior se existir
-                if(dto.NomeDoArquivo == usuario.NomeDoArquivo)
+                if(dto.NomeDoArquivo != usuario.NomeDoArquivo && !string.IsNullOrWhiteSpace(dto.NomeDoArquivo))
                 {
-                    if (!string.IsNullOrEmpty(usuario.NomeDoArquivo))
-                    {
-                        await _fileStorageService.ExcluirArquivoAsync(usuario.NomeDoArquivo);
-                    }
-                }
-               
+                    var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.ArquivoUpload, dto.NomeDoArquivo);
+                }           
 
-                var caminhoArquivo = await _fileStorageService.SalvarArquivoAsync(dto.ArquivoUpload,dto.NomeDoArquivo);
-                //usuario.NomeDoArquivo = caminhoArquivo;
             }
             catch (Exception ex)
             {
