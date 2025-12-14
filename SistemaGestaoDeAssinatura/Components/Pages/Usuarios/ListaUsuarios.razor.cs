@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using Domain.DTOs;
 using Domain.Interfaces.Service;
+using Domain.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
@@ -18,24 +20,74 @@ public partial class ListaUsuarios : ComponentBase
     [Inject]
     public NotificationService NotificationService { get; set; } = null!;
 
-    private RadzenDataGrid<UsuarioListagemDTO>? grid;
+    private RadzenDataGrid<UsuarioListagemDTO> grid = new();
     private List<UsuarioListagemDTO> usuarios = new();
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await CarregarUsuarios();
+            await Pesquisar();
         }
     }
-
-    private async Task CarregarUsuarios()
+    public async Task Pesquisar()
     {
-        var resultado = await UsuarioService.ListarUsuariosAsync();
+        await LoadData(new LoadDataArgs
+        {
+            Skip = 0,
+            Top = 100,
+            OrderBy = "re"            
+            
+        });
+    }
+    private async Task LoadData(LoadDataArgs args)
+    {
+        Expression<Func<Usuario, bool>>? filtro = null;
+        Expression<Func<Usuario, object>>? orderBy = null;
+        bool ascending = true;
+        int? pagina = null;
+        int? quantidade = null;
+
+        // Construir filtro se houver
+        if (args.Filters != null && args.Filters.Any())
+        {
+
+        }
+
+        // Construir ordenação
+        if (!string.IsNullOrEmpty(args.OrderBy))
+        {
+            var propertyName = args.OrderBy.Split(' ').FirstOrDefault();
+            if (!string.IsNullOrEmpty(propertyName))
+            {
+                ascending = !args.OrderBy.Contains(" desc", StringComparison.OrdinalIgnoreCase);
+                
+                // Mapear propriedades do DTO para propriedades do Model
+                // Nota: "nome" vem de RegistroAbility, então não pode ser ordenado diretamente no banco
+                orderBy = propertyName.ToLower() switch
+                {
+                    "re" => (Expression<Func<Usuario, object>>)(u => u.UserName ?? string.Empty),
+                    "email" => (Expression<Func<Usuario, object>>)(u => u.Email ?? string.Empty),
+                    "ativo" => (Expression<Func<Usuario, object>>)(u => u.Ativo),
+                    _ => null
+                };
+            }
+        }
+
+        // Paginação
+        if (args.Skip.HasValue && args.Top.HasValue && args.Top.Value > 0)
+        {
+            pagina = args.Skip.Value / args.Top.Value;
+            quantidade = args.Top.Value;
+        }
+
+        var resultado = await UsuarioService.ListarUsuariosAsync(filtro, orderBy, ascending, pagina, quantidade);
         if (resultado.Sucesso && resultado.Dados != null)
         {
-            usuarios = resultado.Dados;
-            StateHasChanged();
+            usuarios = resultado.Dados.Itens;
+            if (grid != null)
+            {
+                grid.Count = resultado.Dados.TotalItens;
+            }
         }
         else
         {
@@ -46,17 +98,22 @@ public partial class ListaUsuarios : ComponentBase
                 Detail = resultado.Mensagem 
             });
         }
+        //grid.Reload();\
+        StateHasChanged();
     }
 
     private async Task AbrirDialogCriar()
     {
         var resultado = await DialogService.OpenAsync<CriarUsuarioDialog>("Criar Usuário", 
             new Dictionary<string, object>(), 
-            new DialogOptions { Width = "700px", Height = "auto" });
+            new DialogOptions { Width = "900px", Height = "auto" });
 
         if (resultado != null && resultado is bool && (bool)resultado)
         {
-            await CarregarUsuarios();
+            if (grid != null)
+            {
+                await grid.Reload();
+            }
         }
     }
 
@@ -69,7 +126,10 @@ public partial class ListaUsuarios : ComponentBase
 
         if (resultado != null && resultado is bool && (bool)resultado)
         {
-            await CarregarUsuarios();
+            if (grid != null)
+            {
+                await grid.Reload();
+            }
         }
     }
 

@@ -3,6 +3,8 @@ using Domain.Interfaces.Repository;
 using Domain.Interfaces.Service;
 using Domain.Models;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Radzen;
 
 namespace SistemaGestaoDeAssinatura.Components.Pages.Usuarios;
@@ -33,7 +35,6 @@ public partial class CriarUsuarioDialog : ComponentBase
     private IFormFile? arquivoSelecionado;
     private string? arquivoAtual;
     private bool modoEdicao => UsuarioId.HasValue;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -128,14 +129,7 @@ public partial class CriarUsuarioDialog : ComponentBase
 
         RespostaDTO<object> resultado;
 
-        if (modoEdicao && UsuarioId.HasValue)
-        {
-            resultado = await UsuarioService.AtualizarUsuarioAsync(model);
-        }
-        else
-        {
-            resultado = await UsuarioService.CriarUsuarioAsync(model);
-        }
+        resultado = await UsuarioService.SalveUsuarioAsync(model);
 
         if (resultado.Sucesso)
         {

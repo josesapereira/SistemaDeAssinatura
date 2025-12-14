@@ -24,19 +24,16 @@ public partial class Ativacao2FA : ComponentBase
     private bool carregando = false;
     private bool carregandoQRCode = true;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.Identity?.IsAuthenticated ?? true)
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            if (!authState.User.Identity?.IsAuthenticated ?? true)
-            {
-                Navigation.NavigateTo("/", forceLoad: true);
-                return;
-            }
-
-            await CarregarQRCode();
+            Navigation.NavigateTo("/", forceLoad: true);
+            return;
         }
+
+        await CarregarQRCode();
     }
 
     private async Task CarregarQRCode()
@@ -63,7 +60,6 @@ public partial class Ativacao2FA : ComponentBase
         finally
         {
             carregandoQRCode = false;
-            StateHasChanged();
         }
     }
 

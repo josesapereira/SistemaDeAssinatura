@@ -7,6 +7,6 @@ public class UsuarioListagemDTO
     public string Nome { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public bool Ativo { get; set; }
-    public Guid RoleId { get; set; }
+    public string Role { get; set; }
 }
 

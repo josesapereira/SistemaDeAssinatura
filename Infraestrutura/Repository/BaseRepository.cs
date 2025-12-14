@@ -1,10 +1,12 @@
-using System.Linq.Expressions;
+using Domain.DTOs;
+using Domain.Interfaces.Repository;
 using Infraestrutura.Contexto;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Infraestrutura.Repository;
 
-public abstract class BaseRepository<T> where T : class
+public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
 {
     protected readonly AppDbContext _context;
     protected readonly DbSet<T> _dbSet;
@@ -20,12 +22,43 @@ public abstract class BaseRepository<T> where T : class
         return await _dbSet.FindAsync(id);
     }
 
-    public virtual async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filtro = null)
+    public virtual async Task<ResultadoPaginado<T>> GetAllAsync(Expression<Func<T, bool>>? filtro = null, Expression<Func<T, object>>? orderBy = null,
+        bool ascending = true, int? pagina = null, int? quantidade = null)
     {
-        if (filtro == null)
-            return await _dbSet.ToListAsync();
+        IQueryable<T> query = _dbSet;
 
-        return await _dbSet.Where(filtro).ToListAsync();
+        if (filtro != null)
+        {
+            query = query.Where(filtro);
+        }
+
+        if (orderBy != null)
+        {
+            query = ascending ? query.OrderBy(orderBy) : query.OrderByDescending(orderBy);
+        }
+
+        if (pagina.HasValue && quantidade.HasValue && pagina.Value >= 0 && quantidade.Value >= 0)
+        {
+            query = query.Skip((pagina.Value) * quantidade.Value).Take(quantidade.Value);
+        }
+        var resultado = new ResultadoPaginado<T>
+        {
+            Itens = await query.ToListAsync(),
+            TotalItens = await CountAsync(filtro)
+        };
+        return resultado;
+    }
+
+    public virtual async Task<int> CountAsync(Expression<Func<T, bool>>? filtro = null)
+    {
+        IQueryable<T> query = _dbSet;
+
+        if (filtro != null)
+        {
+            query = query.Where(filtro);
+        }
+
+        return await query.CountAsync();
     }
 
     public virtual async Task<T> AdicionarAsync(T entity)

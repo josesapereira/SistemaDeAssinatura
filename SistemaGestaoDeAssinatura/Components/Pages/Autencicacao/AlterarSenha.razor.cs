@@ -20,15 +20,12 @@ public partial class AlterarSenha : ComponentBase
     private string mensagemSucesso = string.Empty;
     private bool carregando = false;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.Identity?.IsAuthenticated ?? true)
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            if (!authState.User.Identity?.IsAuthenticated ?? true)
-            {
-                Navigation.NavigateTo("/", forceLoad: true);
-            }
+            Navigation.NavigateTo("/", forceLoad: true);
         }
     }
 

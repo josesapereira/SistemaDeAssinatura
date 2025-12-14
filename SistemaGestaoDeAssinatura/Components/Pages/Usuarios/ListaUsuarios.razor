@@ -22,7 +22,7 @@
 
     <RadzenRow>
         <RadzenColumn>
-            <RadzenDataGrid @ref="grid" Data="@usuarios" TItem="UsuarioListagemDTO" AllowPaging="true" PageSize="10" 
+            <RadzenDataGrid @ref="grid" LoadData="@LoadData" TItem="UsuarioListagemDTO" Data=@usuarios AllowPaging="true" PageSize="10" 
                            AllowSorting="true" FilterMode="FilterMode.Advanced" class="w-100">
                 <Columns>
                     <RadzenDataGridColumn TItem="UsuarioListagemDTO" Property="RE" Title="RE" Width="120px" />
