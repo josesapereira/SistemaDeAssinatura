@@ -1,0 +1,48 @@
+@page "/tipo-documento"
+@using Domain.DTOs
+@using Radzen.Blazor
+@attribute [Authorize]
+
+<PageTitle>Tipos de Documento</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenText TextStyle="TextStyle.H3" Text="Gerenciamento de Tipos de Documento" />
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Criar Novo" Icon="add" Click="@AbrirDialogCriar" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenDataGrid @ref="grid" LoadData="@LoadData" TItem="TipoDocumentoDTO" Data=@tiposDocumento AllowPaging="true" PageSize="10" 
+                           AllowSorting="true" FilterMode="FilterMode.Advanced" class="w-100">
+                <Columns>
+                    <RadzenDataGridColumn TItem="TipoDocumentoDTO" Property="Nome" Title="Nome" Width="200px" />
+                    <RadzenDataGridColumn TItem="TipoDocumentoDTO" Property="Descricao" Title="Descrição" Width="400px" />
+                    <RadzenDataGridColumn TItem="TipoDocumentoDTO" Property="Ativo" Title="Ativo" Width="100px">
+                        <Template>
+                            <RadzenBadge BadgeStyle="@(context.Ativo ? BadgeStyle.Success : BadgeStyle.Danger)" 
+                                        Text="@(context.Ativo ? "Ativo" : "Inativo")" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TipoDocumentoDTO" Title="Ações" Width="80px" Sortable="false" Filterable="false">
+                        <Template>
+                            <RadzenButton Icon="edit" Size="ButtonSize.Small" 
+                                        Click="@(() => AbrirDialogEditar(context))" 
+                                        ButtonStyle="ButtonStyle.Info" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+

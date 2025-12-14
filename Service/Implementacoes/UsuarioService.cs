@@ -546,7 +546,8 @@ public class UsuarioService : IUsuarioService
             Nome = usuario.Nome,
             Email = usuario.Email ?? "",
             Ativo = usuario.Ativo,
-            NomeDoArquivo = usuario.NomeDoArquivo
+            NomeDoArquivo = usuario.NomeDoArquivo,
+            RoleId = usuario.Roles[0].Role.Id
         };
         if (!string.IsNullOrWhiteSpace(usuario.NomeDoArquivo))
         {

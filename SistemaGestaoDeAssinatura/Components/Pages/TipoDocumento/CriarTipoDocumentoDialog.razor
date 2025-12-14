@@ -1,0 +1,29 @@
+@using Domain.DTOs
+@using Radzen.Blazor
+@attribute [Authorize]
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Nome" class="w-100">
+        <RadzenTextBox @bind-Value="@model.Nome"
+                       Placeholder="Digite o nome do tipo de documento"
+                       MaxLength="100" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Descrição" class="w-100">
+        <RadzenTextArea @bind-Value="@model.Descricao"
+                        Placeholder="Digite a descrição do tipo de documento"
+                        MaxLength="500"
+                        Rows="4" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+        <RadzenText Text="Ativo" />
+        <RadzenSwitch @bind-Value="@model.Ativo" />
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="mt-3">
+        <RadzenButton Text="Salvar" Click="OnSubmit" Icon="save" />
+        <RadzenButton Text="Cancelar" ButtonStyle="ButtonStyle.Light" Click="@Cancelar" />
+    </RadzenStack>
+</RadzenStack>
+

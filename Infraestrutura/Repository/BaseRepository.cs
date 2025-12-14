@@ -74,5 +74,16 @@ public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
         await _context.SaveChangesAsync();
         return entity;
     }
+
+    public virtual async Task<bool> ExcluirAsync(Guid id)
+    {
+        var entity = await GetByIdAsync(id);
+        if (entity == null)
+            return false;
+
+        _dbSet.Remove(entity);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }
 

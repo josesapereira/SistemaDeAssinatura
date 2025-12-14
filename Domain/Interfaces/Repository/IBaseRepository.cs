@@ -10,5 +10,6 @@ public interface IBaseRepository<T> where T : class
     Task<int> CountAsync(Expression<Func<T, bool>>? filtro = null);
     Task<T> AdicionarAsync(T entity);
     Task<T> AtualizarAsync(T entity);
+    Task<bool> ExcluirAsync(Guid id);
 }
 

@@ -11,6 +11,7 @@ public class AppDbContext : IdentityDbContext<Usuario, Role, Guid>
     }
 
     public DbSet<RegistroAbility> RegistroAbility { get; set; }
+    public DbSet<TipoDocumento> TipoDocumento { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
