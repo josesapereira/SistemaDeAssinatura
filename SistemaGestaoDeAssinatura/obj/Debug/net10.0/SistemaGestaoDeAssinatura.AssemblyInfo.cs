@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SistemaGestaoDeAssinatura")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+280eed96b90d25caa9d62fa233ba23c51bc7cb1e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+462ee2e646a02dcdae220499e95b832a7b3a5ee7")]
 [assembly: System.Reflection.AssemblyProductAttribute("SistemaGestaoDeAssinatura")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SistemaGestaoDeAssinatura")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -16,5 +16,10 @@ public class RoleRepository : BaseRepository<Role>, IRoleRepository
     {
         return await _context.Roles.ToListAsync();
     }
+
+    public new async Task<Role?> GetByIdAsync(long id)
+    {
+        return await _context.Roles.FindAsync(id);
+    }
 }
 

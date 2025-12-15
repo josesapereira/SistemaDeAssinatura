@@ -14,6 +14,7 @@ public class UsuarioService : IUsuarioService
 {
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IRegistroAbilityRepository _registroAbilityRepository;
+    private readonly IRoleRepository _roleRepository;
     private readonly UserManager<Usuario> _userManager;
     private readonly SignInManager<Usuario> _signInManager;
     private readonly IMapper _mapper;
@@ -23,6 +24,7 @@ public class UsuarioService : IUsuarioService
     public UsuarioService(
         IUsuarioRepository usuarioRepository,
         IRegistroAbilityRepository registroAbilityRepository,
+        IRoleRepository roleRepository,
         UserManager<Usuario> userManager,
         SignInManager<Usuario> signInManager,
         IMapper mapper,
@@ -31,6 +33,7 @@ public class UsuarioService : IUsuarioService
     {
         _usuarioRepository = usuarioRepository;
         _registroAbilityRepository = registroAbilityRepository;
+        _roleRepository = roleRepository;
         _userManager = userManager;
         _signInManager = signInManager;
         _mapper = mapper;
@@ -308,7 +311,7 @@ public class UsuarioService : IUsuarioService
         return Convert.ToBase64String(qrCodeBytes);
     }
 
-    public async Task<RespostaDTO<object>> SalveUsuarioAsync(CriarUsuarioDTO dto)
+    public async Task<RespostaDTO<object>> SalveUsuarioAsync(UsuarioDTO dto)
     {
         var resposta = new RespostaDTO<object>();
 
@@ -321,7 +324,7 @@ public class UsuarioService : IUsuarioService
             resposta.Erros.Add("UserName não encontrado no RegistroAbility");
             return resposta;
         }
-        if (dto.Id != Guid.Empty)
+        if (dto.Id != 0)
         {
             var usuario = await _usuarioRepository.GetByIdAsync(dto.Id);
             if (usuario == null)
@@ -349,6 +352,8 @@ public class UsuarioService : IUsuarioService
                     return resposta;
                 }
             }
+
+            // Usar AutoMapper para atualizar o usuário
             usuario.Email = dto.Email;
             usuario.Ativo = dto.Ativo;
             usuario.Nome = dto.Nome;
@@ -362,6 +367,9 @@ public class UsuarioService : IUsuarioService
                 resposta.Erros.AddRange(resultado.Errors.Select(e => e.Description));
                 return resposta;
             }
+
+            // Atualizar role se fornecido
+            await AdicionarRoleAoUsuarioAsync(usuario, dto.RoleId);
 
             resposta.Sucesso = true;
             resposta.Mensagem = "Usuário atualizado com sucesso";
@@ -378,18 +386,11 @@ public class UsuarioService : IUsuarioService
                 return resposta;
             }
 
-            // Criar usuário no Identity
-            var usuario = new Usuario
-            {
-                UserName = dto.UserName,
-                Nome = dto.Nome,
-                Email = dto.Email,
-                Ativo = dto.Ativo,
-                NomeDoArquivo = dto.NomeDoArquivo,
-                PrimeiroAcesso = true,
-                DoisFatoresAtivo = true,
-                TwoFactorEnabled = true,
-            };
+            // Usar AutoMapper para criar o usuário
+            var usuario = _mapper.Map<Usuario>(dto);
+            usuario.PrimeiroAcesso = true;
+            usuario.DoisFatoresAtivo = true;
+            usuario.TwoFactorEnabled = true;
 
             var resultado = await _userManager.CreateAsync(usuario, "123456");
 
@@ -414,11 +415,10 @@ public class UsuarioService : IUsuarioService
                 resposta.Erros.AddRange(resultado.Errors.Select(e => e.Description));
                 return resposta;
             }
+
+            // Adicionar role se fornecido
+            await AdicionarRoleAoUsuarioAsync(usuario, dto.RoleId);
         }
-
-
-        // Processar upload se fornecido
-
 
         resposta.Sucesso = true;
         resposta.Mensagem = "Usuário criado com sucesso";
@@ -534,28 +534,53 @@ public class UsuarioService : IUsuarioService
         return resposta;
     }
 
-    public async Task<CriarUsuarioDTO> GetByIdAsync(Guid id)
+    public async Task<UsuarioDTO> GetByIdAsync(long id)
     {
-
         var usuario = await _usuarioRepository.GetByIdAsync(id);
+        if (usuario == null)
+            return new UsuarioDTO();
 
-        var detalhesDTO = new CriarUsuarioDTO
-        {
-            Id = usuario.Id,
-            UserName = usuario.UserName,
-            Nome = usuario.Nome,
-            Email = usuario.Email ?? "",
-            Ativo = usuario.Ativo,
-            NomeDoArquivo = usuario.NomeDoArquivo,
-            RoleId = usuario.Roles[0].Role.Id
-        };
+        // Usar AutoMapper para converter Usuario para UsuarioDTO
+        var usuarioDTO = _mapper.Map<UsuarioDTO>(usuario);
+
+        // Carregar arquivo se existir
         if (!string.IsNullOrWhiteSpace(usuario.NomeDoArquivo))
         {
             var arquivo = await _fileStorageService.LerArquivoAsync(usuario.NomeDoArquivo);
-            detalhesDTO.ArquivoUpload = arquivo;
-
+            usuarioDTO.ArquivoUpload = arquivo ?? Array.Empty<byte>();
         }
-        return detalhesDTO;
+
+        return usuarioDTO;
+    }
+
+    /// <summary>
+    /// Adiciona ou atualiza a role do usuário apenas se for diferente da atual
+    /// </summary>
+    private async Task AdicionarRoleAoUsuarioAsync(Usuario usuario, long? roleId)
+    {
+        if (!roleId.HasValue)
+            return;
+
+        var role = await _roleRepository.GetByIdAsync(roleId.Value);
+        if (role == null)
+            return;
+
+        // Verificar qual role o usuário já tem
+        var userRoles = await _userManager.GetRolesAsync(usuario);
+        var roleAtual = userRoles.FirstOrDefault();
+
+        // Só adicionar/remover se a role for diferente da atual
+        if (roleAtual != role.Name)
+        {
+            // Remover todas as roles existentes
+            if (userRoles.Any())
+            {
+                await _userManager.RemoveFromRolesAsync(usuario, userRoles);
+            }
+
+            // Adicionar a nova role
+            await _userManager.AddToRoleAsync(usuario, role.Name);
+        }
     }
 }
 

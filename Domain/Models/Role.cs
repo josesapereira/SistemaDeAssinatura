@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Models;
 
-public class Role : IdentityRole<Guid>
+public class Role : IdentityRole<long>
 {
     public Role(string role) => Name = role;
     

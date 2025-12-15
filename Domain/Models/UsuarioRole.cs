@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Domain.Models;
 
-public class UsuarioRole : IdentityUserRole<Guid>
+public class UsuarioRole : IdentityUserRole<long>
 {
-    public Usuario Usuario { get; set; } = null!;
-    [AutoInclude]
-    public Role Role { get; set; } = null!;
+    public Usuario Usuario { get; set; }
+    //[AutoInclude]
+    public Role Role { get; set; }
 }
 
 

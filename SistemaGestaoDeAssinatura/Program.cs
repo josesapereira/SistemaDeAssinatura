@@ -79,6 +79,22 @@ builder.Services.AddSingleton(mapper);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<AppDbContext>((options =>
+{
+    options.UseSqlServer(connectionString, sql =>
+    {
+        sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        //if (KeyCloak.isProducao)
+        //{
+        //    sql.UseCompatibilityLevel(160);
+        //}
+        //else
+        //{
+        //    sql.UseCompatibilityLevel(100);
+        //}
+    }
+    ).LogTo(Console.Write, LogLevel.None);
+}), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
 builder.Services.AddIdentityCore<Usuario>(options =>
 {

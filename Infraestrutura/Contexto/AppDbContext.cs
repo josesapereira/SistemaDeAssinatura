@@ -1,10 +1,11 @@
+using Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Domain.Models;
 
 namespace Infraestrutura.Contexto;
 
-public class AppDbContext : IdentityDbContext<Usuario, Role, Guid>
+public class AppDbContext : IdentityDbContext<Usuario, Role, long, IdentityUserClaim<long>, UsuarioRole, IdentityUserLogin<long>, IdentityRoleClaim<long>, IdentityUserToken<long>>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -17,20 +18,25 @@ public class AppDbContext : IdentityDbContext<Usuario, Role, Guid>
     {
         base.OnModelCreating(builder);
 
-        // Configurar relacionamento Usuario ↔ UsuarioRole ↔ Role
-        builder.Entity<UsuarioRole>(entity =>
+        builder.Entity<UsuarioRole>(userRole =>
         {
-            entity.HasOne(ur => ur.Usuario)
-                .WithMany(u => u.Roles)
-                .HasForeignKey(ur => ur.UserId)
-                .OnDelete(DeleteBehavior.Cascade).IsRequired();
+            userRole.HasKey(ur => new { ur.UserId, ur.RoleId });
 
-            entity.HasOne(ur => ur.Role)
+            userRole.HasOne(ur => ur.Role)
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId)
-                .OnDelete(DeleteBehavior.Cascade).IsRequired();
-            entity.Navigation(ur => ur.Role).AutoInclude();
+                .IsRequired();
+
+            userRole.HasOne(ur => ur.Usuario)
+                .WithMany(r => r.Roles)
+                .HasForeignKey(ur => ur.UserId)
+                .IsRequired();
+
+            userRole.Navigation(ur => ur.Role).AutoInclude();
         });
+
+
+
         // Configurar RegistroAbility
         builder.Entity<RegistroAbility>(entity =>
         {

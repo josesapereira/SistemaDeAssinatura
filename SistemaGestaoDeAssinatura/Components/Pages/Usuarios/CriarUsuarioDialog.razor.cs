@@ -12,7 +12,7 @@ namespace SistemaGestaoDeAssinatura.Components.Pages.Usuarios;
 public partial class CriarUsuarioDialog : ComponentBase
 {
     [Parameter]
-    public Guid? UsuarioId { get; set; }
+    public long? UsuarioId { get; set; }
 
     [Inject]
     public IUsuarioService UsuarioService { get; set; } = null!;
@@ -29,7 +29,7 @@ public partial class CriarUsuarioDialog : ComponentBase
     [Inject]
     public NotificationService NotificationService { get; set; } = null!;
 
-    private CriarUsuarioDTO model = new();
+    private UsuarioDTO model = new();
     private List<Role> roles = new();
     private string nomeSelecionado = string.Empty;
     private IFormFile? arquivoSelecionado;
