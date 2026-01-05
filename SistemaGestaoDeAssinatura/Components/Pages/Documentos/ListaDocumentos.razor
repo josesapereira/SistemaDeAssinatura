@@ -1,0 +1,147 @@
+@page "/documentos"
+@using Domain.DTOs
+@using Domain.Enums
+@using Radzen.Blazor
+@attribute [Authorize]
+
+<PageTitle>Documentos</PageTitle>
+
+<RadzenStack Gap="10px">
+    
+
+    <RadzenCard>
+        <RadzenRow>
+            <RadzenColumn>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Gerenciamento de Documentos" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenStack>
+            <RadzenRow Gap="10px">
+                <RadzenColumn Size="2" SizeMD="2">
+                    <RadzenFormField Text="Data Início">
+                        <RadzenDatePicker @bind-Value="@filtroDataInicio" DateFormat="dd/MM/yyyy" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="2" SizeMD="2">
+                    <RadzenFormField Text="Data Fim">
+                        <RadzenDatePicker @bind-Value="@filtroDataFim" DateFormat="dd/MM/yyyy" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="2" SizeMD="2">
+                    <RadzenFormField Text="Tipo de Documento">
+                        <RadzenDropDown @bind-Value="@filtroTipoDocumentoId"
+                                        Data="@tiposDocumento"
+                                        TextProperty="Nome"
+                                        ValueProperty="Id"
+                                        Placeholder="Todos" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="2" SizeMD="2">
+                    <RadzenFormField Text="Status do Documento">
+                        <RadzenDropDown @bind-Value="@filtroStatusDocumento"
+                                        Data="@statusDocumentoList"
+                                        TextProperty="Text"
+                                        ValueProperty="Value"
+                                        Placeholder="Todos" />
+                    </RadzenFormField>
+                </RadzenColumn>
+                <RadzenColumn Size="3" SizeMD="3">
+                    <RadzenFormField Text="Username ou Nome do Assinante">
+                        <RadzenTextBox @bind-Value="@filtroNomeAssinante" Placeholder="Digite o username ou nome" />
+                    </RadzenFormField>
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="10px" Style="margin-top:10px" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Filtrar" Icon="filter_list" Click="@Filtrar" />
+                <RadzenButton Text="Novo Documento" Icon="add" Click="@AbrirDialogCriar" ButtonStyle="ButtonStyle.Primary" />
+            </RadzenStack>
+@*             <RadzenRow>
+
+                
+            </RadzenRow> *@
+        </RadzenStack>
+    </RadzenCard>
+
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenDataGrid @ref="grid" LoadData="@LoadData" TItem="DocumentoDTO" Data="@documentos"
+                            AllowPaging="true" PageSize="10" AllowSorting="true"
+                            Expandable="true" class="w-100">
+                <Columns>
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Property="TipoDeDocumento" Title="Tipo de Documento" Width="200px" />
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Property="DataInclusao" Title="Data Inclusão" Width="150px">
+                        <Template>
+                            @context.DataInclusao.ToString("dd/MM/yyyy")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Title="Username Assinante" Width="150px">
+                        <Template>
+                            @(context.Assinantes.FirstOrDefault()?.AssinanteId.ToString() ?? "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Title="Nome Assinante" Width="250px">
+                        <Template>
+                            @(context.Assinantes.FirstOrDefault()?.UsuarioAssinante ?? "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Property="UsuarioInclusao" Title="Usuário Inclusão" Width="200px" />
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Title="Ações" Width="200px" Sortable="false" Filterable="false">
+                        <Template>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Icon="visibility" Size="ButtonSize.Small"
+                                              Click="@(() => VisualizarDocumento(context))"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Title="Visualizar Documento" />
+                                <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                                              Click="@(() => EditarDocumento(context))"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Title="Editar Documento" />
+                                <RadzenButton Icon="download" Size="ButtonSize.Small"
+                                              Click="@(() => DownloadDocumento(context))"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Title="Download Documento" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <Template Context="documento">
+                    <RadzenDataGrid TItem="AssinanteDTO" Data="@documento.Assinantes" class="w-100" Style="margin-left: 2rem;">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="AssinanteDTO" Title="Username" Width="150px">
+                                <Template>
+                                    @context.AssinanteId.ToString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="AssinanteDTO" Property="UsuarioAssinante" Title="Nome do Assinante" Width="250px" />
+                            <RadzenDataGridColumn TItem="AssinanteDTO" Property="StatusDaAssinatura" Title="Status da Assinatura" Width="150px">
+                                <Template>
+                                    @{
+                                        var badgeStyle = context.StatusDaAssinatura switch
+                                        {
+                                            StatusDaAssinatura.Assinado => BadgeStyle.Success,
+                                            StatusDaAssinatura.Cancelado => BadgeStyle.Danger,
+                                            _ => BadgeStyle.Warning
+                                        };
+                                        var texto = context.StatusDaAssinatura switch
+                                        {
+                                            StatusDaAssinatura.Assinado => "Assinado",
+                                            StatusDaAssinatura.Cancelado => "Cancelado",
+                                            _ => "Pendente"
+                                        };
+                                    }
+                                    <RadzenBadge BadgeStyle="@badgeStyle" Text="@texto" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="AssinanteDTO" Property="DataAssinatura" Title="Data Assinatura" Width="150px">
+                                <Template>
+                                    @(context.DataAssinatura?.ToString("dd/MM/yyyy") ?? "-")
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </Template>
+            </RadzenDataGrid>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+

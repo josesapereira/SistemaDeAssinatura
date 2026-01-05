@@ -28,4 +28,12 @@ public class UsuarioDTO
             }
         }
     }
+
+    public string RENome
+    {
+        get
+        {
+            return $"{UserName} | {Nome}";
+        }
+    }
 }

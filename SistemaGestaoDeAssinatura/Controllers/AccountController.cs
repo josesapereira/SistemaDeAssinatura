@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace SistemaCotaExtra.Controllers
+namespace SistemaGestaoDeAssinatura.Controllers
 {
     [Route("api/Account/[action]")]
     public class AccountController : Controller

@@ -4,6 +4,7 @@ using Infraestrutura.Contexto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infraestrutura.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251216010435_AdicionarEntidadesDocumento")]
+    partial class AdicionarEntidadesDocumento
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -68,11 +71,6 @@ namespace Infraestrutura.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("IPDaAssinatura")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
@@ -137,14 +135,9 @@ namespace Infraestrutura.Migrations
                     b.Property<Guid>("TipoDeDocumentoId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<long>("UsuarioInclusaoId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
                     b.HasIndex("TipoDeDocumentoId");
-
-                    b.HasIndex("UsuarioInclusaoId");
 
                     b.ToTable("Documento");
                 });
@@ -479,8 +472,8 @@ namespace Infraestrutura.Migrations
 
             modelBuilder.Entity("Domain.Models.Assinante", b =>
                 {
-                    b.HasOne("Domain.Models.Usuario", "UsuarioAssinante")
-                        .WithMany()
+                    b.HasOne("Domain.Models.Usuario", "Assinante_Usuario")
+                        .WithMany("Assinantes")
                         .HasForeignKey("AssinanteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -491,9 +484,9 @@ namespace Infraestrutura.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Documento");
+                    b.Navigation("Assinante_Usuario");
 
-                    b.Navigation("UsuarioAssinante");
+                    b.Navigation("Documento");
                 });
 
             modelBuilder.Entity("Domain.Models.Assinatura", b =>
@@ -518,20 +511,12 @@ namespace Infraestrutura.Migrations
             modelBuilder.Entity("Domain.Models.Documento", b =>
                 {
                     b.HasOne("Domain.Models.TipoDocumento", "TipoDeDocumento")
-                        .WithMany()
+                        .WithMany("Documentos")
                         .HasForeignKey("TipoDeDocumentoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Models.Usuario", "UsuarioInclusao")
-                        .WithMany()
-                        .HasForeignKey("UsuarioInclusaoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("TipoDeDocumento");
-
-                    b.Navigation("UsuarioInclusao");
                 });
 
             modelBuilder.Entity("Domain.Models.UsuarioRole", b =>
@@ -601,8 +586,15 @@ namespace Infraestrutura.Migrations
                     b.Navigation("UserRoles");
                 });
 
+            modelBuilder.Entity("Domain.Models.TipoDocumento", b =>
+                {
+                    b.Navigation("Documentos");
+                });
+
             modelBuilder.Entity("Domain.Models.Usuario", b =>
                 {
+                    b.Navigation("Assinantes");
+
                     b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618

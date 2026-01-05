@@ -13,6 +13,9 @@ public class AppDbContext : IdentityDbContext<Usuario, Role, long, IdentityUserC
 
     public DbSet<RegistroAbility> RegistroAbility { get; set; }
     public DbSet<TipoDocumento> TipoDocumento { get; set; }
+    public DbSet<Documento> Documento { get; set; }
+    public DbSet<Assinante> Assinante { get; set; }
+    public DbSet<Assinatura> Assinatura { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -42,6 +45,51 @@ public class AppDbContext : IdentityDbContext<Usuario, Role, long, IdentityUserC
         {
             entity.HasIndex(r => r.RE)
                 .IsUnique();
+        });
+
+        // Configurar Documento
+        builder.Entity<Documento>(entity =>
+        {
+            entity.HasOne(d => d.TipoDeDocumento)
+                .WithMany()
+                .HasForeignKey(d => d.TipoDeDocumentoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.UsuarioInclusao)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioInclusaoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(d => d.Assinantes)
+                .WithOne(a => a.Documento)
+                .HasForeignKey(a => a.DocumentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(d => d.Assinaturas)
+                .WithOne(a => a.Documento)
+                .HasForeignKey(a => a.DocumentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configurar Assinante
+        builder.Entity<Assinante>(entity =>
+        {
+            entity.HasOne(a => a.UsuarioAssinante)
+                .WithMany()
+                .HasForeignKey(a => a.AssinanteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(a => new { a.AssinanteId, a.DocumentoId })
+                .IsUnique();
+        });
+
+        // Configurar Assinatura
+        builder.Entity<Assinatura>(entity =>
+        {
+            entity.HasOne(a => a.Assinante)
+                .WithMany()
+                .HasForeignKey(a => a.AssinanteId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         foreach (var entityType in builder.Model.GetEntityTypes())
         {
