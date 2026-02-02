@@ -12,48 +12,62 @@ namespace Infraestrutura.Services;
 public class FileStorageService : IFileStorageService
 {
     private readonly IHostEnvironment? _environment;
-    private const string BaseUploadPath = "uploads/usuarios";
+    private const string BaseUploadPath = "uploads";
 
     public FileStorageService(IHostEnvironment? environment = null)
     {
         _environment = environment;
     }
 
+    //public async Task<string> SalvarArquivoAsync(byte[] arquivo, string fileName)
+    //{
+    //    if (arquivo == null || arquivo.Length == 0)
+    //        throw new ArgumentException("Arquivo inválido");
+
+    //    if (_environment == null || string.IsNullOrEmpty(_environment.ContentRootPath))
+    //        return fileName;
+
+    //    var uploadPath = Path.Combine(_environment.ContentRootPath, BaseUploadPath);
+
+    //    if (!Directory.Exists(uploadPath))
+    //        Directory.CreateDirectory(uploadPath);
+
+    //    var filePath = Path.Combine(uploadPath, fileName);
+
+    //    using var image = Image.Load(arquivo);
+
+    //    // 🔹 Ajusta DPI (apenas para impressão)
+    //    image.Metadata.HorizontalResolution = 1200;
+    //    image.Metadata.VerticalResolution = 1200;
+
+    //    // 🔹 Redimensiona mantendo proporção (máx 1200px)
+    //    image.Mutate(x => x.Resize(new ResizeOptions
+    //    {
+    //        Mode = ResizeMode.Max,
+    //        Size = new Size(1200, 1200)
+    //    }));
+
+    //    // 🔹 Controle de qualidade JPEG
+    //    var encoder = new JpegEncoder
+    //    {
+    //        Quality = 85 // 1–100 (85 é excelente equilíbrio)
+    //    };
+
+    //    await image.SaveAsync(filePath, encoder);
+
+    //    return fileName;
+    //}
     public async Task<string> SalvarArquivoAsync(byte[] arquivo, string fileName)
     {
-        if (arquivo == null || arquivo.Length == 0)
-            throw new ArgumentException("Arquivo inválido");
-
-        if (_environment == null || string.IsNullOrEmpty(_environment.ContentRootPath))
-            return fileName;
-
         var uploadPath = Path.Combine(_environment.ContentRootPath, BaseUploadPath);
-
-        if (!Directory.Exists(uploadPath))
-            Directory.CreateDirectory(uploadPath);
-
         var filePath = Path.Combine(uploadPath, fileName);
 
-        using var image = Image.Load(arquivo);
-
-        // 🔹 Ajusta DPI (apenas para impressão)
-        image.Metadata.HorizontalResolution = 1200;
-        image.Metadata.VerticalResolution = 1200;
-
-        // 🔹 Redimensiona mantendo proporção (máx 1200px)
-        image.Mutate(x => x.Resize(new ResizeOptions
+        if (!Directory.Exists(uploadPath))
         {
-            Mode = ResizeMode.Max,
-            Size = new Size(1200, 1200)
-        }));
+            Directory.CreateDirectory(uploadPath);
+        }
 
-        // 🔹 Controle de qualidade JPEG
-        var encoder = new JpegEncoder
-        {
-            Quality = 85 // 1–100 (85 é excelente equilíbrio)
-        };
-
-        await image.SaveAsync(filePath, encoder);
+        await File.WriteAllBytesAsync(filePath, arquivo);
 
         return fileName;
     }

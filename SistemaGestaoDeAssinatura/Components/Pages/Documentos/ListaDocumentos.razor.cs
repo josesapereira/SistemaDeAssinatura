@@ -194,7 +194,7 @@ public partial class ListaDocumentos : ComponentBase
     {
         var resultado = await DialogService.OpenAsync<DocumentoDialog>("Novo Documento",
             new Dictionary<string, object>(),
-            new DialogOptions { Width = "1200px", Height = "auto", Resizable = true, Draggable = true });
+            new DialogOptions { Width = "90vw", Height = "90vh", Resizable = true, Draggable = true });
 
         if (resultado != null && resultado is bool && (bool)resultado)
         {

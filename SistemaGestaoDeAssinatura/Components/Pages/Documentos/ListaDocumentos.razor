@@ -45,9 +45,9 @@
                                         Placeholder="Todos" />
                     </RadzenFormField>
                 </RadzenColumn>
-                <RadzenColumn Size="3" SizeMD="3">
-                    <RadzenFormField Text="Username ou Nome do Assinante">
-                        <RadzenTextBox @bind-Value="@filtroNomeAssinante" Placeholder="Digite o username ou nome" />
+                <RadzenColumn Size="4" SizeMD="4">
+                    <RadzenFormField Text="RE ou Nome do Assinante">
+                        <RadzenTextBox @bind-Value="@filtroNomeAssinante" Placeholder="Digite o RE ou nome" />
                     </RadzenFormField>
                 </RadzenColumn>
             </RadzenRow>
@@ -55,10 +55,6 @@
                 <RadzenButton Text="Filtrar" Icon="filter_list" Click="@Filtrar" />
                 <RadzenButton Text="Novo Documento" Icon="add" Click="@AbrirDialogCriar" ButtonStyle="ButtonStyle.Primary" />
             </RadzenStack>
-@*             <RadzenRow>
-
-                
-            </RadzenRow> *@
         </RadzenStack>
     </RadzenCard>
 

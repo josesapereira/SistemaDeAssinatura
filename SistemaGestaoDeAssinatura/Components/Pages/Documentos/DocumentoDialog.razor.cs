@@ -5,6 +5,8 @@ using Domain.Interfaces.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
+using Radzen.Blazor;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SistemaGestaoDeAssinatura.Components.Pages.Documentos;
 
@@ -47,8 +49,11 @@ public partial class DocumentoDialog : ComponentBase
     private List<TipoDocumentoDTO> tiposDocumento = new();
     private bool modoEdicao => DocumentoId.HasValue && DocumentoId.Value != Guid.Empty;
     private bool modoVisualizacao => ModoVisualizacao;
-    private bool temAssinatura => model.Assinaturas != null && model.Assinaturas.Any() && 
+    private bool temAssinatura => model.Assinaturas != null && model.Assinaturas.Any() &&
                                   model.Assinaturas.Any(a => a.DataDaAssinatura != default);
+    public List<UsuarioDTO> Usuarios { get; set; } = new();
+
+    private long usuarioSelecionadoId = 0;
 
     private BadgeStyle BadgeStyleStatus
     {
@@ -79,7 +84,7 @@ public partial class DocumentoDialog : ComponentBase
             {
                 // Inicializar com status padrão
                 model.StatusDocumento = StatusDocumento.Aguardando_assinatura;
-                
+
                 // Obter usuário atual para UsuarioInclusaoId
                 if (AuthenticationState != null)
                 {
@@ -94,7 +99,57 @@ public partial class DocumentoDialog : ComponentBase
                     }
                 }
             }
+            if (!modoVisualizacao && !temAssinatura)
+            {
+                await carrregarAssinantes();
+            }
+
         }
+    }
+    private async Task carrregarAssinantes()
+    {
+        var resultadoUsuarios = await UsuarioRepository.GetAllAsync(
+           filtro: u => u.Ativo,
+           orderBy: u => u.Nome,
+           ascending: true);
+
+        if (resultadoUsuarios == null || !resultadoUsuarios.Itens.Any())
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Aviso",
+                Detail = "Nenhum usuário ativo encontrado"
+            });
+            return;
+        }
+
+        // Converter para UsuarioDTO
+        var usuariosDTO = resultadoUsuarios.Itens.Select(u => new UsuarioDTO
+        {
+            Id = u.Id,
+            UserName = u.UserName ?? string.Empty,
+            Nome = u.Nome ?? string.Empty,
+            Email = u.Email ?? string.Empty,
+            Ativo = u.Ativo
+        }).ToList();
+
+        // Filtrar usuários que já estão na lista
+        Usuarios = usuariosDTO
+            .Where(u => !model.Assinantes.Any(a => a.AssinanteId == u.Id))
+            .ToList();
+
+        if (!Usuarios.Any())
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Aviso",
+                Detail = "Todos os usuários já foram adicionados como assinantes"
+            });
+            return;
+        }
+
     }
 
     private async Task CarregarTiposDocumento()
@@ -253,58 +308,23 @@ public partial class DocumentoDialog : ComponentBase
     private async Task AdicionarAssinante()
     {
         // Buscar todos os usuários ativos
-        var resultadoUsuarios = await UsuarioRepository.GetAllAsync(
-            filtro: u => u.Ativo,
-            orderBy: u => u.Nome,
-            ascending: true);
-
-        if (resultadoUsuarios == null || !resultadoUsuarios.Itens.Any())
+        if (usuarioSelecionadoId == 0)
         {
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Warning,
                 Summary = "Aviso",
-                Detail = "Nenhum usuário ativo encontrado"
+                Detail = "Selecione um assinante!"
             });
             return;
         }
-
-        // Converter para UsuarioDTO
-        var usuariosDTO = resultadoUsuarios.Itens.Select(u => new UsuarioDTO
-        {
-            Id = u.Id,
-            UserName = u.UserName ?? string.Empty,
-            Nome = u.Nome ?? string.Empty,
-            Email = u.Email ?? string.Empty,
-            Ativo = u.Ativo
-        }).ToList();
-
-        // Filtrar usuários que já estão na lista
-        var usuariosDisponiveis = usuariosDTO
-            .Where(u => !model.Assinantes.Any(a => a.AssinanteId == u.Id))
-            .ToList();
-
-        if (!usuariosDisponiveis.Any())
-        {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Aviso",
-                Detail = "Todos os usuários já foram adicionados como assinantes"
-            });
-            return;
-        }
-
         // Abrir dialog para selecionar usuário
-        UsuarioDTO usuarioSelecionado = await DialogService.OpenAsync<SelecionarUsuarioDialog>(
-            "Adicionar Assinante",
-            new Dictionary<string, object> { { "Usuarios", usuariosDisponiveis } },
-            new DialogOptions { Width = "500px", Height = "auto" });
+        UsuarioDTO usuarioSelecionado = Usuarios.FirstOrDefault(x => x.Id == usuarioSelecionadoId);
 
-        if (usuarioSelecionado != null && usuarioSelecionado is UsuarioDTO usuario)
+        if (usuarioSelecionado != null)
         {
             // Verificar se já não está na lista (dupla verificação)
-            if (model.Assinantes.Any(a => a.AssinanteId == usuario.Id))
+            if (model.Assinantes.Any(a => a.AssinanteId == usuarioSelecionado.Id))
             {
                 NotificationService.Notify(new NotificationMessage
                 {
@@ -319,13 +339,14 @@ public partial class DocumentoDialog : ComponentBase
             model.Assinantes.Add(new AssinanteDTO
             {
                 Id = Guid.NewGuid(),
-                AssinanteId = usuario.Id,
-                UsuarioAssinante = usuario.Nome,
+                AssinanteId = usuarioSelecionado.Id,
+                UsuarioAssinante = usuarioSelecionado.Nome,
                 DocumentoId = model.Id,
                 StatusDaAssinatura = StatusDaAssinatura.Pendente,
                 DataAssinatura = null
             });
-
+            usuarioSelecionadoId = 0;
+            await carrregarAssinantes();
             StateHasChanged();
         }
     }
