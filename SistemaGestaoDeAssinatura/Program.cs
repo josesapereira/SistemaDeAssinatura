@@ -67,6 +67,11 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<ITipoDocumentoService, TipoDocumentoService>();
 builder.Services.AddScoped<IDocumentoService, DocumentoService>();
 
+// Registrar HttpClient para DeepFaceService (separado do HttpClient do Blazor)
+// O HttpClient será injetado automaticamente pelo DI container
+builder.Services.AddHttpClient<DeepFaceService>();
+builder.Services.AddScoped<IDeepFaceService, DeepFaceService>();
+
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
 ILoggerFactory logger = LoggerFactory.Create(builder => builder.AddConsole());

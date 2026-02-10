@@ -91,7 +91,7 @@ public partial class Ativacao2FA : ComponentBase
             if (resultado != null && resultado.Sucesso)
             {
                 // Recarregar a página para aplicar autenticação completa
-                Navigation.NavigateTo("/home", forceLoad: true);
+                Navigation.NavigateTo("/meus-documentos-pendentes", forceLoad: true);
             }
             else
             {

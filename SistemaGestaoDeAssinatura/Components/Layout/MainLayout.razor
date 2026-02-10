@@ -21,6 +21,49 @@
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
     };
+
+    let cameraStream = null;
+
+    window.iniciarCamera = async () => {
+        try {
+            const video = document.getElementById('video');
+            if (!video) return;
+            
+            cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'user',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                } 
+            });
+            
+            video.srcObject = cameraStream;
+        } catch (error) {
+            console.error('Erro ao acessar câmera:', error);
+            throw error;
+        }
+    };
+
+    window.pararCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+    };
+
+    window.capturarFoto = () => {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        
+        if (!video || !canvas) return null;
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        
+        return canvas.toDataURL('image/jpeg', 0.8);
+    };
 </script>
 
 
@@ -55,6 +98,7 @@
                     <RadzenPanelMenu DisplayStyle="@DisplayStyle" Style="flex-grow: 1;" class="menu shadow-none">
 
                         <RadzenPanelMenuItem Icon="folder" Text="Documentos" Path="documentos" />
+                        <RadzenPanelMenuItem Icon="assignment" Text="Meus Documentos Pendentes" Path="meus-documentos-pendentes" />
 
                         <RadzenPanelMenuItem Icon="settings" Text="Cadastros">
                             <RadzenPanelMenuItem Icon="group_add" Text="Usuários" Path="usuarios" />

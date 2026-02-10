@@ -3,8 +3,6 @@ using Domain.Enums;
 using Domain.Interfaces.Repository;
 using Domain.Interfaces.Service;
 using Domain.Models;
-using Infraestrutura.Contexto;
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 
@@ -16,20 +14,17 @@ public class DocumentoService : IDocumentoService
     private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IFileStorageService _fileStorageService;
-    private readonly AppDbContext _context;
 
     public DocumentoService(
         IDocumentoRepository repository,
         ITipoDocumentoRepository tipoDocumentoRepository,
         IUsuarioRepository usuarioRepository,
-        IFileStorageService fileStorageService,
-        AppDbContext context)
+        IFileStorageService fileStorageService)
     {
         _repository = repository;
         _tipoDocumentoRepository = tipoDocumentoRepository;
         _usuarioRepository = usuarioRepository;
         _fileStorageService = fileStorageService;
-        _context = context;
     }
 
     public async Task<RespostaDTO<object>> SalvarAsync(DocumentoDTO dto)
@@ -152,10 +147,8 @@ public class DocumentoService : IDocumentoService
                         DocumentoId = documento.Id
                     };
 
-                    await _context.Set<Assinante>().AddAsync(assinante);
+                    await _repository.AdicionarAssinanteAsync(assinante);
                 }
-
-                await _context.SaveChangesAsync();
 
                 resposta.Sucesso = true;
                 resposta.Mensagem = "Documento criado com sucesso";
@@ -175,14 +168,12 @@ public class DocumentoService : IDocumentoService
                 // Regra 3: Se status for Documento_revogado, atualizar assinaturas com Validacao para Revogacao
                 if (dto.StatusDocumento == StatusDocumento.Documento_revogado)
                 {
-                    var assinaturas = await _context.Set<Assinatura>()
-                        .Where(a => a.DocumentoId == documento.Id && a.TipoAssinatura == TipoAssinatura.Validacao)
-                        .ToListAsync();
+                    var assinaturas = await _repository.ObterAssinaturasPorDocumentoAsync(documento.Id, TipoAssinatura.Validacao);
 
                     foreach (var assinatura in assinaturas)
                     {
                         assinatura.TipoAssinatura = TipoAssinatura.Revogacao;
-                        _context.Set<Assinatura>().Update(assinatura);
+                        await _repository.AtualizarAssinaturaAsync(assinatura);
                     }
                 }
 
@@ -197,11 +188,7 @@ public class DocumentoService : IDocumentoService
                 }
 
                 // Atualizar assinantes
-                var assinantesExistentes = await _context.Set<Assinante>()
-                    .Where(a => a.DocumentoId == documento.Id)
-                    .ToListAsync();
-
-                _context.Set<Assinante>().RemoveRange(assinantesExistentes);
+                await _repository.RemoverAssinantesAsync(documento.Id);
 
                 foreach (var assinanteDTO in dto.Assinantes)
                 {
@@ -220,11 +207,10 @@ public class DocumentoService : IDocumentoService
                         DocumentoId = documento.Id
                     };
 
-                    await _context.Set<Assinante>().AddAsync(assinante);
+                    await _repository.AdicionarAssinanteAsync(assinante);
                 }
 
                 await _repository.AtualizarAsync(documento);
-                await _context.SaveChangesAsync();
 
                 resposta.Sucesso = true;
                 resposta.Mensagem = "Documento atualizado com sucesso";
@@ -298,44 +284,12 @@ public class DocumentoService : IDocumentoService
 
         try
         {
-            var resultado = await _repository.GetAllAsync(filtro, orderBy, ascending, pagina, quantidade);
+            var resultado = await _repository.GetAllComRelacionamentosAsync(filtro, orderBy, ascending, pagina, quantidade);
 
             var listaDTO = new List<DocumentoDTO>();
 
             foreach (var documento in resultado.Itens)
             {
-                // Carregar relacionamentos
-                await _context.Entry(documento)
-                    .Reference(d => d.TipoDeDocumento)
-                    .LoadAsync();
-
-                await _context.Entry(documento)
-                    .Reference(d => d.UsuarioInclusao)
-                    .LoadAsync();
-
-                await _context.Entry(documento)
-                    .Collection(d => d.Assinantes)
-                    .LoadAsync();
-
-                await _context.Entry(documento)
-                    .Collection(d => d.Assinaturas)
-                    .LoadAsync();
-
-                // Carregar assinantes com usuários
-                foreach (var assinante in documento.Assinantes)
-                {
-                    await _context.Entry(assinante)
-                        .Reference(a => a.UsuarioAssinante)
-                        .LoadAsync();
-                }
-
-                // Carregar assinaturas com assinantes
-                foreach (var assinatura in documento.Assinaturas)
-                {
-                    await _context.Entry(assinatura)
-                        .Reference(a => a.Assinante)
-                        .LoadAsync();
-                }
 
                 var documentoDTO = new DocumentoDTO
                 {
@@ -402,52 +356,12 @@ public class DocumentoService : IDocumentoService
 
         try
         {
-            var documento = await _repository.GetByIdAsync(id);
+            var documento = await _repository.GetByIdComRelacionamentosAsync(id);
             if (documento == null)
             {
                 resposta.Sucesso = false;
                 resposta.Mensagem = "Documento não encontrado";
                 return resposta;
-            }
-
-            // Carregar relacionamentos
-            await _context.Entry(documento)
-                .Reference(d => d.TipoDeDocumento)
-                .LoadAsync();
-
-            await _context.Entry(documento)
-                .Reference(d => d.UsuarioInclusao)
-                .LoadAsync();
-
-            await _context.Entry(documento)
-                .Collection(d => d.Assinantes)
-                .LoadAsync();
-
-            await _context.Entry(documento)
-                .Collection(d => d.Assinaturas)
-                .LoadAsync();
-
-            // Carregar assinantes com usuários
-            foreach (var assinante in documento.Assinantes)
-            {
-                await _context.Entry(assinante)
-                    .Reference(a => a.UsuarioAssinante)
-                    .LoadAsync();
-            }
-
-            // Carregar assinaturas com assinantes
-            foreach (var assinatura in documento.Assinaturas)
-            {
-                await _context.Entry(assinatura)
-                    .Reference(a => a.Assinante)
-                    .LoadAsync();
-
-                if (assinatura.Assinante != null)
-                {
-                    await _context.Entry(assinatura.Assinante)
-                        .Reference(a => a.UsuarioAssinante)
-                        .LoadAsync();
-                }
             }
 
             // Carregar arquivo se existir
@@ -502,6 +416,124 @@ public class DocumentoService : IDocumentoService
         {
             resposta.Sucesso = false;
             resposta.Mensagem = $"Erro ao obter documento: {ex.Message}";
+            resposta.Erros.Add(ex.Message);
+        }
+
+        return resposta;
+    }
+
+    public async Task<RespostaDTO<ResultadoPaginado<DocumentoDTO>>> ListarDocumentosPendentesAsync(
+        long usuarioId,
+        Expression<Func<Documento, object>>? orderBy = null,
+        bool ascending = true,
+        int? pagina = null,
+        int? quantidade = null)
+    {
+        var resposta = new RespostaDTO<ResultadoPaginado<DocumentoDTO>>();
+
+        try
+        {
+            // Buscar documentos onde o usuário é assinante
+            var documentos = await _repository.ObterDocumentosPendentesPorUsuarioAsync(usuarioId);
+
+            // Filtrar documentos onde o usuário ainda não assinou
+            var documentosPendentes = new List<Documento>();
+            foreach (var documento in documentos)
+            {
+                var assinanteUsuario = documento.Assinantes.FirstOrDefault(a => a.AssinanteId == usuarioId);
+                if (assinanteUsuario == null)
+                    continue;
+
+                // Verificar se já assinou
+                bool jaAssinou = false;
+                if (documento.StatusDocumento == StatusDocumento.Aguardando_assinatura)
+                {
+                    // Verificar se tem assinatura de validação
+                    jaAssinou = documento.Assinaturas.Any(a => 
+                        a.AssinanteId == assinanteUsuario.Id && 
+                        a.TipoAssinatura == TipoAssinatura.Validacao);
+                }
+                else if (documento.StatusDocumento == StatusDocumento.Aguardando_assinatura_da_revogacao)
+                {
+                    // Verificar se tem assinatura de revogação
+                    jaAssinou = documento.Assinaturas.Any(a => 
+                        a.AssinanteId == assinanteUsuario.Id && 
+                        a.TipoAssinatura == TipoAssinatura.Revogacao);
+                }
+
+                if (!jaAssinou)
+                {
+                    documentosPendentes.Add(documento);
+                }
+            }
+
+            // Aplicar paginação em memória após filtrar
+            var totalItens = documentosPendentes.Count;
+            if (pagina.HasValue && quantidade.HasValue && pagina.Value >= 0 && quantidade.Value >= 0)
+            {
+                documentosPendentes = documentosPendentes
+                    .Skip(pagina.Value * quantidade.Value)
+                    .Take(quantidade.Value)
+                    .ToList();
+            }
+
+            var listaDTO = new List<DocumentoDTO>();
+
+            foreach (var documento in documentosPendentes)
+            {
+                var documentoDTO = new DocumentoDTO
+                {
+                    Id = documento.Id,
+                    TipoDeDocumentoId = documento.TipoDeDocumentoId,
+                    TipoDeDocumento = documento.TipoDeDocumento?.Nome ?? string.Empty,
+                    DataInclusao = documento.DataInclusao,
+                    UsuarioInclusaoId = documento.UsuarioInclusaoId,
+                    UsuarioInclusao = documento.UsuarioInclusao?.Nome ?? string.Empty,
+                    NomeDoArquivo = documento.NomeDoArquivo,
+                    StatusDocumento = documento.StatusDocumento,
+                    Assinantes = documento.Assinantes.Select(a =>
+                    {
+                        var (status, dataAssinatura) = CalcularStatusAssinante(a, documento.StatusDocumento, documento.Assinaturas);
+                        return new AssinanteDTO
+                        {
+                            Id = a.Id,
+                            AssinanteId = a.AssinanteId,
+                            UsuarioAssinante = a.UsuarioAssinante?.Nome ?? string.Empty,
+                            DocumentoId = a.DocumentoId,
+                            StatusDaAssinatura = status,
+                            DataAssinatura = dataAssinatura
+                        };
+                    }).ToList(),
+                    Assinaturas = documento.Assinaturas.Select(a => new AssinaturaDTO
+                    {
+                        Id = a.Id,
+                        DataDaAssinatura = a.DataDaAssinatura,
+                        TipoAssinatura = a.TipoAssinatura,
+                        AssinanteId = a.AssinanteId,
+                        Assinante = a.Assinante?.UsuarioAssinante?.Nome ?? string.Empty,
+                        SistemaDeAssinatura = a.SistemaDeAssinatura,
+                        VersaoSistema = a.VersaoSistema,
+                        SistemaOperacional = a.SistemaOperacional,
+                        IPDaAssinatura = a.IPDaAssinatura,
+                        DocumentoId = a.DocumentoId
+                    }).ToList()
+                };
+
+                listaDTO.Add(documentoDTO);
+            }
+
+            resposta.Sucesso = true;
+            resposta.Mensagem = "Lista de documentos pendentes carregada com sucesso";
+            resposta.Dados = new ResultadoPaginado<DocumentoDTO>
+            {
+                Itens = listaDTO,
+                TotalItens = totalItens
+            };
+        }
+        catch (Exception ex)
+        {
+            resposta.Sucesso = false;
+            resposta.Mensagem = $"Erro ao listar documentos pendentes: {ex.Message}";
             resposta.Erros.Add(ex.Message);
         }
 

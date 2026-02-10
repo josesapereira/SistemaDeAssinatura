@@ -1,0 +1,124 @@
+@page "/meus-documentos-pendentes"
+@using Domain.DTOs
+@using Domain.Enums
+@using Radzen.Blazor
+@attribute [Authorize]
+
+<PageTitle>Meus Documentos Pendentes</PageTitle>
+
+<RadzenStack Gap="10px">
+    <RadzenCard>
+        <RadzenRow>
+            <RadzenColumn>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Documentos Pendentes de Assinatura" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="Lista de documentos que aguardam sua assinatura" />
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenRow>
+        <RadzenColumn>
+            <RadzenDataGrid @ref="grid" LoadData="@LoadData" TItem="DocumentoDTO" Data="@documentos"
+                            AllowPaging="true" PageSize="10" AllowSorting="true"
+                            Expandable="true" class="w-100">
+                <Columns>
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Property="TipoDeDocumento" Title="Tipo de Documento" Width="200px" />
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Property="DataInclusao" Title="Data Inclusão" Width="150px">
+                        <Template>
+                            @context.DataInclusao.ToString("dd/MM/yyyy HH:mm")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Property="UsuarioInclusao" Title="Incluído por" Width="200px" />
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Property="StatusDocumento" Title="Status" Width="200px">
+                        <Template>
+                            @{
+                                var badgeStyle = context.StatusDocumento switch
+                                {
+                                    StatusDocumento.Aguardando_assinatura => BadgeStyle.Warning,
+                                    StatusDocumento.Aguardando_assinatura_da_revogacao => BadgeStyle.Danger,
+                                    _ => BadgeStyle.Info
+                                };
+                                var texto = context.StatusDocumento switch
+                                {
+                                    StatusDocumento.Aguardando_assinatura => "Aguardando Assinatura",
+                                    StatusDocumento.Aguardando_assinatura_da_revogacao => "Aguardando Revogação",
+                                    _ => context.StatusDocumentoTexto
+                                };
+                            }
+                            <RadzenBadge BadgeStyle="@badgeStyle" Text="@texto" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DocumentoDTO" Title="Ações" Width="250px" Sortable="false" Filterable="false">
+                        <Template>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Icon="visibility" Size="ButtonSize.Small"
+                                              Click="@(() => VisualizarDocumento(context))"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Title="Visualizar Documento" />
+                                <RadzenButton Icon="download" Size="ButtonSize.Small"
+                                              Click="@(() => DownloadDocumento(context))"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Title="Download Documento" />
+                                <RadzenButton Icon="face" Size="ButtonSize.Small"
+                                              Click="@(() => AssinarComReconhecimentoFacial(context))"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Title="Assinar com Reconhecimento Facial"
+                                              Visible="@(context.Assinantes.Any(a => a.AssinanteId == usuarioId && a.StatusDaAssinatura == StatusDaAssinatura.Pendente))" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <Template Context="documento">
+                    <RadzenCard Style="margin-left: 2rem; margin-top: 1rem;">
+                        <RadzenStack Gap="10px">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Informações do Documento" />
+                            <RadzenRow>
+                                <RadzenColumn Size="6">
+                                    <RadzenText><strong>Nome do Arquivo:</strong> @documento.NomeDoArquivo</RadzenText>
+                                </RadzenColumn>
+                                <RadzenColumn Size="6">
+                                    <RadzenText><strong>Total de Assinantes:</strong> @documento.Assinantes.Count</RadzenText>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Text="Assinantes" />
+                            <RadzenDataGrid TItem="AssinanteDTO" Data="@documento.Assinantes" class="w-100">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="AssinanteDTO" Title="RE" Width="150px">
+                                        <Template>
+                                            @context.AssinanteId.ToString()
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AssinanteDTO" Property="UsuarioAssinante" Title="Nome do Assinante" Width="250px" />
+                                    <RadzenDataGridColumn TItem="AssinanteDTO" Property="StatusDaAssinatura" Title="Status da Assinatura" Width="150px">
+                                        <Template>
+                                            @{
+                                                var badgeStyleAssinante = context.StatusDaAssinatura switch
+                                                {
+                                                    StatusDaAssinatura.Assinado => BadgeStyle.Success,
+                                                    StatusDaAssinatura.Cancelado => BadgeStyle.Danger,
+                                                    _ => BadgeStyle.Warning
+                                                };
+                                                var textoAssinante = context.StatusDaAssinatura switch
+                                                {
+                                                    StatusDaAssinatura.Assinado => "Assinado",
+                                                    StatusDaAssinatura.Cancelado => "Cancelado",
+                                                    _ => "Pendente"
+                                                };
+                                            }
+                                            <RadzenBadge BadgeStyle="@badgeStyleAssinante" Text="@textoAssinante" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AssinanteDTO" Property="DataAssinatura" Title="Data Assinatura" Width="150px">
+                                        <Template>
+                                            @(context.DataAssinatura?.ToString("dd/MM/yyyy HH:mm") ?? "-")
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </RadzenStack>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataGrid>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>

@@ -1,0 +1,95 @@
+@using Domain.DTOs
+@using Domain.Enums
+@using Radzen.Blazor
+
+<RadzenStack Gap="1.5rem">
+    <RadzenText TextStyle="TextStyle.H5" Text="Assinatura com Reconhecimento Facial" />
+
+    @if (etapa == EtapaAssinatura.Instrucao)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Preparando instruções..." />
+                <RadzenText TextStyle="TextStyle.Body2" Text="Aguarde enquanto preparamos as instruções de prova de vida" />
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                
+                <div style="text-align: center;">
+                    <video id="video" autoplay playsinline style="width: 100%; max-width: 500px; border: 2px solid #007bff; border-radius: 8px;"></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (etapa == EtapaAssinatura.Captura)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@instrucaoAtual" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="Posicione seu rosto na frente da câmera e execute a ação solicitada" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="@($"Foto {fotoAtualIndex + 1} de 3")" />
+                
+                <div style="text-align: center;">
+                    <video id="video" autoplay playsinline style="width: 100%; max-width: 500px; border: 2px solid #007bff; border-radius: 8px;"></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="1rem">
+                    <RadzenButton Text="Capturar Foto" 
+                                  Icon="camera_alt" 
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="CapturarFoto"
+                                  Disabled="@processando" />
+                    <RadzenButton Text="Cancelar" 
+                                  Icon="cancel" 
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="Cancelar"
+                                  Disabled="@processando" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (etapa == EtapaAssinatura.Processando)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Processando assinatura..." />
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="@mensagemProcessamento" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (etapa == EtapaAssinatura.Sucesso)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="check_circle" Style="font-size: 48px; color: green;" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Assinatura realizada com sucesso!" />
+                <RadzenButton Text="Fechar" 
+                              Icon="close" 
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="Fechar" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (etapa == EtapaAssinatura.Erro)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="error" Style="font-size: 48px; color: red;" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Erro ao processar assinatura" />
+                <RadzenText TextStyle="TextStyle.Body2" Text="@mensagemErro" />
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                    <RadzenButton Text="Tentar Novamente" 
+                                  Icon="refresh" 
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="TentarNovamente" />
+                    <RadzenButton Text="Cancelar" 
+                                  Icon="close" 
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="Cancelar" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>
+

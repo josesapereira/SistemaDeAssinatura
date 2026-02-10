@@ -1,0 +1,22 @@
+# DeepFace Service - Dependências Python
+
+# FastAPI e servidor
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Processamento de imagens
+Pillow>=10.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# DeepFace e dependências
+deepface>=0.0.79
+tensorflow>=2.13.0,<2.20.0
+tf-keras>=2.15.0
+
+# MediaPipe para prova de vida
+mediapipe>=0.10.0,<0.11.0
+
+# Utilitários
+pydantic>=2.5.0
